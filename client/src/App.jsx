@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
 import { playerApi, seatApi, gachaApi, taskApi } from './api';
+import ErrorBoundary from './components/ErrorBoundary';
 import CurrencyBar from './components/CurrencyBar';
 import AdventurerBar from './components/AdventurerBar';
 import IdleHall from './components/IdleHall';
@@ -28,7 +29,22 @@ function App() {
         setError(null);
         const res = await playerApi.init();
         setPlayerId(res.data.playerId);
-        setPlayer(res.data.player);
+        // Ensure player has all required fields with defaults
+        const playerData = res.data.player || {};
+        setPlayer({
+          name: playerData.name || '无名冒险者',
+          money: playerData.money || 0,
+          ticket: playerData.ticket || 0,
+          hair: playerData.hair || 0,
+          idleRate: playerData.idleRate || 10,
+          bonus: playerData.bonus || 1.0,
+          currentSeat: playerData.currentSeat || null,
+          seatCooldown: playerData.seatCooldown || 0,
+          totalIdleTime: playerData.totalIdleTime || 0,
+          totalMoneyEarned: playerData.totalMoneyEarned || 0,
+          totalGachaCount: playerData.totalGachaCount || 0,
+          lastSave: playerData.lastSave || Math.floor(Date.now() / 1000),
+        });
         localStorage.setItem('playerId', res.data.playerId);
       } catch (err) {
         console.error('Failed to initialize player:', err);
@@ -117,48 +133,50 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1a1a2e] text-gray-100">
-      <CurrencyBar player={player} />
-      <AdventurerBar player={player} onOpenProfile={() => setShowProfile(true)} />
-      <IdleHall 
-        playerId={playerId} 
-        player={player} 
-        seats={seats} 
-        setSeats={setSeats}
-        setPlayer={setPlayer}
-      />
-      <ActivityPanel />
-      <StatusBar player={player} />
-      
-      {showProfile && (
-        <ProfileModal 
+    <ErrorBoundary>
+      <div className="min-h-screen bg-[#1a1a2e] text-gray-100">
+        <CurrencyBar player={player} />
+        <AdventurerBar player={player} onOpenProfile={() => setShowProfile(true)} />
+        <IdleHall 
+          playerId={playerId} 
           player={player} 
-          onClose={() => setShowProfile(false)}
-          onUpdateName={async (name) => {
-            await playerApi.updateName(playerId, name);
-            setPlayer({ ...player, name });
-          }}
-        />
-      )}
-      
-      {showGacha && (
-        <GachaModal 
-          playerId={playerId}
-          player={player}
+          seats={seats} 
+          setSeats={setSeats}
           setPlayer={setPlayer}
-          onClose={() => setShowGacha(false)}
         />
-      )}
-      
-      {showTasks && (
-        <TaskPanel 
-          playerId={playerId}
-          tasks={tasks}
-          setTasks={setTasks}
-          onClose={() => setShowTasks(false)}
-        />
-      )}
-    </div>
+        <ActivityPanel />
+        <StatusBar player={player} />
+        
+        {showProfile && (
+          <ProfileModal 
+            player={player} 
+            onClose={() => setShowProfile(false)}
+            onUpdateName={async (name) => {
+              await playerApi.updateName(playerId, name);
+              setPlayer({ ...player, name });
+            }}
+          />
+        )}
+        
+        {showGacha && (
+          <GachaModal 
+            playerId={playerId}
+            player={player}
+            setPlayer={setPlayer}
+            onClose={() => setShowGacha(false)}
+          />
+        )}
+        
+        {showTasks && (
+          <TaskPanel 
+            playerId={playerId}
+            tasks={tasks}
+            setTasks={setTasks}
+            onClose={() => setShowTasks(false)}
+          />
+        )}
+      </div>
+    </ErrorBoundary>
   );
 }
 
