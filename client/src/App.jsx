@@ -17,17 +17,24 @@ function App() {
   const [showGacha, setShowGacha] = useState(false);
   const [showTasks, setShowTasks] = useState(false);
   const [tasks, setTasks] = useState([]);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   // Initialize player
   useEffect(() => {
     const init = async () => {
       try {
+        setLoading(true);
+        setError(null);
         const res = await playerApi.init();
         setPlayerId(res.data.playerId);
         setPlayer(res.data.player);
         localStorage.setItem('playerId', res.data.playerId);
       } catch (err) {
         console.error('Failed to initialize player:', err);
+        setError(err.message || '连接服务器失败，请刷新重试');
+      } finally {
+        setLoading(false);
       }
     };
     init();
@@ -75,6 +82,31 @@ function App() {
     }, 30000);
     return () => clearInterval(saveInterval);
   }, [playerId, player]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#1a1a2e] flex items-center justify-center">
+        <div className="text-2xl text-gray-400">⚜️ 正在进入部队大厅...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#1a1a2e] flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-2xl text-red-400 mb-4">⚜️ 连接失败</div>
+          <div className="text-gray-400 mb-4">{error}</div>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            刷新重试
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!player) {
     return (
