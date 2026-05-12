@@ -33,7 +33,7 @@ function App() {
         const playerData = res.data.player || {};
         setPlayer({
           name: playerData.name || '无名冒险者',
-          money: playerData.money || 0,
+          money: playerData.money || 100,
           ticket: playerData.ticket || 0,
           hair: playerData.hair || 0,
           idleRate: playerData.idleRate || 10,
@@ -98,6 +98,20 @@ function App() {
     }, 30000);
     return () => clearInterval(saveInterval);
   }, [playerId, player]);
+
+  // 金币增长定时器（每 5 秒）
+  useEffect(() => {
+    if (!player || !player.currentSeat) return;
+    const earnInterval = setInterval(() => {
+      const earningsPerTick = Math.floor((player.idleRate || 10) * (player.bonus || 1.0) * 5);
+      setPlayer(prev => ({
+        ...prev,
+        money: prev.money + earningsPerTick,
+        totalMoneyEarned: prev.totalMoneyEarned + earningsPerTick
+      }));
+    }, 5000);
+    return () => clearInterval(earnInterval);
+  }, [player?.currentSeat, player?.idleRate, player?.bonus]);
 
   if (loading) {
     return (

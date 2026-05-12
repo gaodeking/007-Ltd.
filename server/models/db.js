@@ -14,7 +14,7 @@ async function initDB() {
       CREATE TABLE IF NOT EXISTS players (
         "id" TEXT PRIMARY KEY,
         "name" TEXT DEFAULT '无名冒险者',
-        "money" INTEGER DEFAULT 0,
+        "money" INTEGER DEFAULT 100,
         "ticket" INTEGER DEFAULT 0,
         "hair" INTEGER DEFAULT 0,
         "idleRate" INTEGER DEFAULT 10,

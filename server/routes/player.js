@@ -51,18 +51,34 @@ router.put('/:id/name', async (req, res) => {
 
 router.post('/:id/save', async (req, res) => {
   try {
+    const player = await db.get('SELECT * FROM players WHERE id = $1', [req.params.id]);
+    const now = Math.floor(Date.now() / 1000);
+    const elapsed = now - (player.lastSave || now);
+    
+    // ⚠️ 不确定：后端验证逻辑 - 取前端值和后端计算值的较大者
+    // 后续可能需要调整为强制使用后端计算值或其他策略
+    let backendEarnings = 0;
+    if (player.currentSeat && elapsed > 0) {
+      backendEarnings = Math.floor(elapsed * player.idleRate * player.bonus);
+    }
+    
     const { money, ticket, hair, idleRate, bonus, currentSeat, seatCooldown, totalIdleTime, totalMoneyEarned, totalGachaCount } = req.body;
-
+    
+    const finalMoney = Math.max(money, player.money + backendEarnings);
+    const finalTotalMoneyEarned = Math.max(totalMoneyEarned, player.totalMoneyEarned + backendEarnings);
+    const finalTotalIdleTime = (totalIdleTime || 0) + elapsed;
+    
     await db.run(`
       UPDATE players SET
         "money" = $1, "ticket" = $2, "hair" = $3, "idleRate" = $4, "bonus" = $5,
         "currentSeat" = $6, "seatCooldown" = $7, "totalIdleTime" = $8,
         "totalMoneyEarned" = $9, "totalGachaCount" = $10, "lastSave" = EXTRACT(EPOCH FROM NOW())::INTEGER
       WHERE id = $11
-    `, [money, ticket, hair, idleRate, bonus, currentSeat, seatCooldown, totalIdleTime, totalMoneyEarned, totalGachaCount, req.params.id]);
-
-    res.json({ success: true });
+    `, [finalMoney, ticket, hair, idleRate, bonus, currentSeat, seatCooldown, finalTotalIdleTime, finalTotalMoneyEarned, totalGachaCount, req.params.id]);
+    
+    res.json({ success: true, backendEarnings });
   } catch (err) {
+    console.error('Error in /save:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
