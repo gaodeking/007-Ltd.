@@ -2,7 +2,9 @@
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  // 强制使用 IPv4（Render 免费实例不支持 IPv6）
+  family: 4
 });
 
 async function initDB() {
