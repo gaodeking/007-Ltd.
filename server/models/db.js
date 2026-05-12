@@ -25,6 +25,7 @@ async function initDB() {
         "totalMoneyEarned" INTEGER DEFAULT 0,
         "totalGachaCount" INTEGER DEFAULT 0,
         "lastSave" INTEGER DEFAULT EXTRACT(EPOCH FROM NOW())::INTEGER,
+        "lastHeartbeat" INTEGER DEFAULT 0,
         "createdAt" INTEGER DEFAULT EXTRACT(EPOCH FROM NOW())::INTEGER
       )
     `);

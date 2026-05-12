@@ -103,7 +103,7 @@ function App() {
     return () => clearInterval(saveInterval);
   }, [playerId]);
 
-  // Save on page close (beforeunload)
+  // Save on page close (beforeunload) - save player data
   useEffect(() => {
     if (!playerId || !playerRef.current) return;
     const handleBeforeUnload = () => {
@@ -113,6 +113,30 @@ function App() {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [playerId]);
+
+  // Leave seat on page close (beforeunload)
+  useEffect(() => {
+    if (!playerId || !player?.currentSeat) return;
+    const handleBeforeUnload = () => {
+      const data = JSON.stringify({ playerId });
+      navigator.sendBeacon('/api/seats/leave', data);
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [playerId, player?.currentSeat]);
+
+  // Heartbeat timer (every 15 seconds, only when seated)
+  useEffect(() => {
+    if (!playerId || !player?.currentSeat) return;
+    const heartbeatInterval = setInterval(async () => {
+      try {
+        await playerApi.heartbeat(playerId);
+      } catch (err) {
+        console.error('Heartbeat failed:', err);
+      }
+    }, 15000);
+    return () => clearInterval(heartbeatInterval);
+  }, [playerId, player?.currentSeat]);
 
   // 金币增长定时器（每 5 秒）
   useEffect(() => {

@@ -127,4 +127,15 @@ router.post('/:id/claim-offline', async (req, res) => {
   }
 });
 
+router.post('/:id/heartbeat', async (req, res) => {
+  try {
+    await db.run('UPDATE players SET "lastHeartbeat" = EXTRACT(EPOCH FROM NOW())::INTEGER WHERE id = $1',
+      [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error in /heartbeat:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;
