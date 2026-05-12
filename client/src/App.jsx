@@ -134,9 +134,43 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-[#1a1a2e] text-gray-100">
+      <div className="min-h-screen bg-[#f0ebe5] text-[#4a3a3a]">
         <CurrencyBar player={player} />
         <AdventurerBar player={player} onOpenProfile={() => setShowProfile(true)} />
+        
+        {/* 核心操作栏 */}
+        <div className="max-w-4xl mx-auto px-4 py-3">
+          <div className="flex justify-center gap-4">
+            <button
+              disabled={!!player.currentSeat}
+              className={`flex-1 max-w-[200px] py-3 rounded-xl font-semibold transition-all shadow-sm flex items-center justify-center gap-2 text-white ${
+                player.currentSeat 
+                  ? 'bg-[#6aaa6a] cursor-not-allowed opacity-80' 
+                  : 'bg-[#8fbc8f] hover:bg-[#7faa7f] cursor-pointer'
+              }`}
+            >
+              <span className="text-xl">{player.currentSeat ? '🛌' : '🛏️'}</span>
+              <span>{player.currentSeat ? '坐牢中...' : '入座休息'}</span>
+            </button>
+            
+            <button
+              onClick={() => setShowGacha(true)}
+              className="flex-1 max-w-[200px] py-3 bg-[#d4a0a0] hover:bg-[#c49090] rounded-xl font-semibold transition-all shadow-sm flex items-center justify-center gap-2 text-white"
+            >
+              <span className="text-xl">🎰</span>
+              <span>召唤之门</span>
+            </button>
+            
+            <button
+              onClick={() => setShowTasks(true)}
+              className="flex-1 max-w-[200px] py-3 bg-[#7b9ec4] hover:bg-[#6b8eb4] rounded-xl font-semibold transition-all shadow-sm flex items-center justify-center gap-2 text-white"
+            >
+              <span className="text-xl">📋</span>
+              <span>每日任务</span>
+            </button>
+          </div>
+        </div>
+        
         <IdleHall 
           playerId={playerId} 
           player={player} 

@@ -66,9 +66,9 @@ function IdleHall({ playerId, player, seats, setSeats, setPlayer }) {
   const cooldownSeconds = cooldownRemaining % 60;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6">
-      <div className="bg-white rounded-xl border border-[#e8e0e0] p-6 shadow-sm">
-        <h2 className="text-xl font-bold mb-4 text-center">🏰 冒险者休息处</h2>
+    <div className="max-w-4xl mx-auto px-4 py-6 idle-hall">
+      <div className="bg-white rounded-xl border border-[#d4c8c8] p-6 shadow-sm">
+        <h2 className="text-xl font-bold mb-4 text-center text-[#4a3a3a]"> 冒险者休息处</h2>
         
         <div className="grid grid-cols-5 gap-4 max-w-md mx-auto mb-4">
           {seats.map((seat) => (
@@ -80,13 +80,13 @@ function IdleHall({ playerId, player, seats, setSeats, setPlayer }) {
               title={seat.playerId ? `冒险者: ${seat.playerName}` : `空床位 (${seat.position})`}
             >
               <span className="text-2xl">{getSeatEmoji(seat)}</span>
-              <span className={`text-xs mt-1 ${seat.playerId === playerId ? 'text-[#b76e79] font-medium' : 'text-[#8a7a7a]'}`}>{getSeatName(seat)}</span>
+              <span className={`text-xs mt-1 ${seat.playerId === playerId ? 'text-[#b76e79] font-medium' : 'text-[#6b5b5b]'}`}>{getSeatName(seat)}</span>
             </button>
           ))}
         </div>
 
         {message && (
-          <div className="text-center mb-3 text-sm">{message}</div>
+          <div className="text-center mb-3 text-sm text-[#4a3a3a]">{message}</div>
         )}
 
         <div className="flex justify-center gap-3">
@@ -100,13 +100,13 @@ function IdleHall({ playerId, player, seats, setSeats, setPlayer }) {
             </button>
           )}
           {cooldownRemaining > 0 && (
-            <span className="text-[#8a7a7a] flex items-center">
+            <span className="text-[#6b5b5b] flex items-center">
               ⏱️ 冷却: {cooldownMinutes}:{cooldownSeconds.toString().padStart(2, '0')}
             </span>
           )}
         </div>
 
-        <div className="mt-4 text-center text-sm text-[#8a7a7a]">
+        <div className="mt-4 text-center text-sm text-[#6b5b5b]">
           <span className="mr-4">🧙 = 你</span>
           <span className="mr-4">⚔️ = 其他冒险者</span>
           <span>🛏️ = 空床位</span>

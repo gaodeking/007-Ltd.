@@ -30,10 +30,10 @@ function TaskPanel({ playerId, tasks, setTasks, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl border border-[#e8e0e0] max-w-md w-full shadow-lg">
-        <div className="p-4 border-b border-[#e8e0e0] flex justify-between items-center">
-          <h2 className="text-xl font-bold">📋 每日任务</h2>
-          <button onClick={onClose} className="text-[#8a7a7a] hover:text-[#4a4040] text-2xl">&times;</button>
+      <div className="bg-white rounded-xl border border-[#d4c8c8] max-w-md w-full shadow-lg">
+        <div className="p-4 border-b border-[#d4c8c8] flex justify-between items-center">
+          <h2 className="text-xl font-bold text-[#4a3a3a]"> 每日任务</h2>
+          <button onClick={onClose} className="text-[#6b5b5b] hover:text-[#4a3a3a] text-2xl">&times;</button>
         </div>
         
         <div className="p-4 space-y-3">
@@ -43,19 +43,19 @@ function TaskPanel({ playerId, tasks, setTasks, onClose }) {
             const claimed = task.claimed;
             
             return (
-              <div key={task.id} className="bg-[#f5f0f0] rounded-lg p-4 border border-[#e8e0e0]">
+              <div key={task.id} className="bg-[#f5f0f0] rounded-lg p-4 border border-[#d4c8c8]">
                 <div className="flex justify-between items-start mb-2">
-                  <span className="font-semibold">{task.description}</span>
-                  <span className="text-sm text-[#8a7a7a]">{parseReward(task.reward)}</span>
+                  <span className="font-semibold text-[#4a3a3a]">{task.description}</span>
+                  <span className="text-sm text-[#6b5b5b]">{parseReward(task.reward)}</span>
                 </div>
-                <div className="w-full bg-[#e8e0e0] rounded-full h-2 mb-2">
+                <div className="w-full bg-[#d4c8c8] rounded-full h-2 mb-2">
                   <div 
                     className="bg-[#d4a0a0] h-2 rounded-full transition-all"
                     style={{ width: `${(progress / task.target) * 100}%` }}
                   />
                 </div>
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-[#8a7a7a]">{progress}/{task.target}</span>
+                  <span className="text-[#6b5b5b]">{progress}/{task.target}</span>
                   {claimed ? (
                     <span className="text-[#8fbc8f]">已领取</span>
                   ) : completed ? (
@@ -67,7 +67,7 @@ function TaskPanel({ playerId, tasks, setTasks, onClose }) {
                       领取
                     </button>
                   ) : (
-                    <span className="text-[#8a7a7a]">未完成</span>
+                    <span className="text-[#6b5b5b]">未完成</span>
                   )}
                 </div>
               </div>
