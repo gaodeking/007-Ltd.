@@ -3,30 +3,56 @@
 ## 版本历史
 
 ### v0.0.5B (当前版本)
-**主题：修复 PostgreSQL 字段名大小写问题**
+**主题：家庭开发环境迭代 - UI 重构 + 金币系统 + 座位优化**
 
-#### 问题描述
-- 部署到 Render 后前端报错：`Cannot read properties of undefined (reading 'toString')`
-- 根本原因：PostgreSQL 会将未加双引号的驼峰字段名（如 `seatId`）自动转换为小写（`seatid`）
-- 前端代码期望驼峰命名，但数据库返回小写字段名，导致 `seat.seatId` 为 `undefined`
+#### 本次会话完成的改动
 
-#### 已完成改动
-1. **数据库表结构修复**
-   - `server/models/db.js` - 所有 CREATE TABLE 语句的字段名添加双引号，保持驼峰命名
-   - 例如：`"seatId" INTEGER PRIMARY KEY` 而非 `seatId INTEGER PRIMARY KEY`
+**1. 修复 PostgreSQL 字段名大小写问题**
+- `server/models/db.js` - 所有 CREATE TABLE 语句的字段名添加双引号，保持驼峰命名
+- `server/routes/player.js` - SELECT/UPDATE 语句显式指定驼峰字段名（加双引号）
+- `server/routes/seats.js` - GET /seats 查询使用字段别名保持驼峰命名
+- `server/routes/gacha.js` - 所有 inventory/gacha_log 相关查询修复字段名
+- `server/routes/tasks.js` - daily_tasks/player_tasks 查询修复字段名
+- 已执行 Supabase ALTER TABLE 语句重命名现有字段
 
-2. **路由查询语句修复**
-   - `server/routes/player.js` - SELECT/UPDATE 语句显式指定驼峰字段名（加双引号）
-   - `server/routes/seats.js` - GET /seats 查询使用字段别名保持驼峰命名
-   - `server/routes/gacha.js` - 所有 inventory/gacha_log 相关查询修复字段名
-   - `server/routes/tasks.js` - daily_tasks/player_tasks 查询修复字段名
+**2. 页面 UI 重构**
+- `client/src/App.jsx` - 添加核心操作栏（入座休息/召唤之门/每日任务三按钮）
+- `client/src/App.jsx` - 主背景色改为 `#f0ebe5`（浅米色）
+- `client/src/components/CurrencyBar.jsx` - 布局调整：标题居左，金币居右，移除门票/钻石显示
+- `client/src/components/ActivityPanel.jsx` - 改名"光之冒险"
+- 全局文字颜色优化：主要文字 `#4a3a3a`，次要文字 `#6b5b5b`，边框 `#d4c8c8`
 
-3. **版本号更新**
-   - `package.json` - 版本更新为 `0.0.5B`（B 表示家庭开发环境分支）
+**3. 金币增长系统**
+- `client/src/App.jsx` - 添加金币增长定时器（每 5 秒自动增长）
+- `server/routes/player.js` - save 接口添加后端验证逻辑（取前端值和后端计算值的较大者）
+- `server/models/db.js` - 新玩家初始金币默认值改为 100
+- 计算公式：`earningsPerTick = idleRate × bonus × 5`
 
-#### 注意事项
-- 已部署的 Supabase 数据库需要手动运行 ALTER TABLE 语句重命名字段
-- 新部署会自动使用正确的双引号字段名
+**4. 金币动态效果**
+- `client/src/components/CurrencyBar.jsx` - 金币字号放大至 `text-2xl`
+- `client/tailwind.config.js` - 添加 `floatUp` 自定义动画
+- 每 5 秒金币增长时显示绿色 `+50` 浮动动画（向上移动 20px 并淡出）
+
+**5. 修复金币保存问题**
+- `client/src/App.jsx` - 使用 `useRef` 存储 player 状态，避免 auto-save 定时器被频繁重置
+- `client/src/App.jsx` - 添加 `beforeunload` 事件监听，页面关闭时通过 `sendBeacon` 保存数据
+- `client/src/components/CurrencyBar.jsx` - 修复 +50 动画不显示问题（使用 `earnTrigger` 计数器而非依赖 `earnings` 值）
+
+**6. 修复座位幽灵占用 + 换座冷却优化**
+- `server/models/db.js` - 添加 `lastHeartbeat` 字段（INTEGER DEFAULT 0）
+- `client/src/api/index.js` - 添加 `heartbeat` API
+- `client/src/App.jsx` - 添加心跳定时器（每 15 秒发送一次，仅在座时）
+- `client/src/App.jsx` - 添加 `beforeunload` 释放座位逻辑（sendBeacon 调用 `/seats/leave`）
+- `server/routes/player.js` - 添加 `/heartbeat` 接口
+- `server/routes/seats.js` - 添加超时检测逻辑（30 秒无心跳自动释放座位）
+- `server/routes/seats.js` - 换座冷却从 300 秒（5 分钟）改为 2 秒
+  - `FIRST_SIT_COOLDOWN = 2`（首次入座）
+  - `CHANGE_SEAT_COOLDOWN = 2`（换座）
+  - `LEAVE_SEAT_COOLDOWN = 2`（离开）
+- `server/routes/seats.js` - 错误提示改为"别急，屁股还没坐热呢"
+
+#### 数据库迁移
+- 已执行 Supabase SQL：`ALTER TABLE players ADD COLUMN IF NOT EXISTS "lastHeartbeat" INTEGER DEFAULT 0;`
 
 ---
 
