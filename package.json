@@ -4,9 +4,10 @@
   "description": "加班007 - 网页版挂机小游戏",
   "main": "server/server.js",
   "scripts": {
+    "build": "cd client && npm install && npx vite build",
     "start": "cd server && node server.js",
     "dev": "cd server && node server.js",
-    "build": "cd client && npx vite build"
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install"
   },
   "engines": {
     "node": ">=18.0.0"

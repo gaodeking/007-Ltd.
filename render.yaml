@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: jiaban007
+    env: node
+    region: singapore
+    buildCommand: npm install && npm run build
+    startCommand: cd server && node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: jiaban007-db
+          property: connectionString
+
+databases:
+  - name: jiaban007-db
+    region: singapore

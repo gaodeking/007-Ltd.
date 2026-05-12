@@ -1,19 +1,16 @@
 @echo off
-title Jiaban007 Game Server
+title 加班007 - 前端
+start cmd /k "cd /d %~dp0client && npm run dev"
+
+timeout /t 2 /nobreak >nul
+
+title 加班007 - 后端
 cd /d "%~dp0server"
-echo.
-echo ================================
-echo    Jiaban007 Starting...
-echo ================================
-echo.
-echo Server: http://localhost:3001
-echo Press Ctrl+C to stop
-echo.
 node server.js
 if errorlevel 1 (
     echo.
-    echo [ERROR] Node.js not found
-    echo Download: https://nodejs.org
+    echo [错误] Node.js 未找到或启动失败
+    echo 下载地址: https://nodejs.org
     pause
 )
 pause

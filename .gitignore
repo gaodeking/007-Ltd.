@@ -4,3 +4,4 @@ server/data/
 .DS_Store
 dist/
 .env
+server/.env
