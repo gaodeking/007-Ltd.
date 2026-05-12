@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-function CurrencyBar({ player, earnings }) {
+function CurrencyBar({ player, earnings, earnTrigger }) {
   const [showEarn, setShowEarn] = useState(false);
   const [earnAmount, setEarnAmount] = useState(0);
 
@@ -11,7 +11,7 @@ function CurrencyBar({ player, earnings }) {
       const timer = setTimeout(() => setShowEarn(false), 1500);
       return () => clearTimeout(timer);
     }
-  }, [earnings]);
+  }, [earnTrigger]);
 
   return (
     <div className="bg-white border-b border-[#d4c8c8] px-4 py-3 shadow-sm">

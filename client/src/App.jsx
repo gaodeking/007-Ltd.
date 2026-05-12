@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { playerApi, seatApi, gachaApi, taskApi } from './api';
 import ErrorBoundary from './components/ErrorBoundary';
 import CurrencyBar from './components/CurrencyBar';
@@ -21,6 +21,9 @@ function App() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [earnings, setEarnings] = useState(0);
+  const [earnTrigger, setEarnTrigger] = useState(0);
+  const playerRef = useRef(player);
+  playerRef.current = player;
 
   // Initialize player
   useEffect(() => {
@@ -87,18 +90,29 @@ function App() {
     loadTasks();
   }, [playerId]);
 
-  // Auto-save every 30 seconds
+  // Auto-save every 30 seconds (using ref to avoid timer reset)
   useEffect(() => {
-    if (!playerId || !player) return;
+    if (!playerId || !playerRef.current) return;
     const saveInterval = setInterval(async () => {
       try {
-        await playerApi.save(playerId, player);
+        await playerApi.save(playerId, playerRef.current);
       } catch (err) {
         console.error('Failed to save:', err);
       }
     }, 30000);
     return () => clearInterval(saveInterval);
-  }, [playerId, player]);
+  }, [playerId]);
+
+  // Save on page close (beforeunload)
+  useEffect(() => {
+    if (!playerId || !playerRef.current) return;
+    const handleBeforeUnload = () => {
+      const data = JSON.stringify(playerRef.current);
+      navigator.sendBeacon(`/api/player/${playerId}/save`, data);
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [playerId]);
 
   // 金币增长定时器（每 5 秒）
   useEffect(() => {
@@ -111,6 +125,7 @@ function App() {
         totalMoneyEarned: prev.totalMoneyEarned + earningsPerTick
       }));
       setEarnings(earningsPerTick);
+      setEarnTrigger(prev => prev + 1);
     }, 5000);
     return () => clearInterval(earnInterval);
   }, [player?.currentSeat, player?.idleRate, player?.bonus]);
@@ -151,7 +166,7 @@ function App() {
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-[#f0ebe5] text-[#4a3a3a]">
-        <CurrencyBar player={player} earnings={earnings} />
+        <CurrencyBar player={player} earnings={earnings} earnTrigger={earnTrigger} />
         <AdventurerBar player={player} onOpenProfile={() => setShowProfile(true)} />
         
         {/* 核心操作栏 */}
