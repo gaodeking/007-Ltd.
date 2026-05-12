@@ -1,6 +1,6 @@
 {
   "name": "jiaban007",
-  "version": "0.0.3",
+  "version": "0.0.5B",
   "description": "加班007 - 网页版挂机小游戏",
   "main": "server/server.js",
   "scripts": {

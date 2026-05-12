@@ -2,7 +2,35 @@
 
 ## 版本历史
 
-### v0.0.4 (当前版本)
+### v0.0.5B (当前版本)
+**主题：修复 PostgreSQL 字段名大小写问题**
+
+#### 问题描述
+- 部署到 Render 后前端报错：`Cannot read properties of undefined (reading 'toString')`
+- 根本原因：PostgreSQL 会将未加双引号的驼峰字段名（如 `seatId`）自动转换为小写（`seatid`）
+- 前端代码期望驼峰命名，但数据库返回小写字段名，导致 `seat.seatId` 为 `undefined`
+
+#### 已完成改动
+1. **数据库表结构修复**
+   - `server/models/db.js` - 所有 CREATE TABLE 语句的字段名添加双引号，保持驼峰命名
+   - 例如：`"seatId" INTEGER PRIMARY KEY` 而非 `seatId INTEGER PRIMARY KEY`
+
+2. **路由查询语句修复**
+   - `server/routes/player.js` - SELECT/UPDATE 语句显式指定驼峰字段名（加双引号）
+   - `server/routes/seats.js` - GET /seats 查询使用字段别名保持驼峰命名
+   - `server/routes/gacha.js` - 所有 inventory/gacha_log 相关查询修复字段名
+   - `server/routes/tasks.js` - daily_tasks/player_tasks 查询修复字段名
+
+3. **版本号更新**
+   - `package.json` - 版本更新为 `0.0.5B`（B 表示家庭开发环境分支）
+
+#### 注意事项
+- 已部署的 Supabase 数据库需要手动运行 ALTER TABLE 语句重命名字段
+- 新部署会自动使用正确的双引号字段名
+
+---
+
+### v0.0.4 (上一版本)
 **主题：数据库迁移到 PostgreSQL + Render 云端部署 + 本地启动优化**
 
 #### 已完成改动
