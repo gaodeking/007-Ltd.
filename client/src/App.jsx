@@ -20,6 +20,7 @@ function App() {
   const [tasks, setTasks] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [earnings, setEarnings] = useState(0);
 
   // Initialize player
   useEffect(() => {
@@ -109,6 +110,7 @@ function App() {
         money: prev.money + earningsPerTick,
         totalMoneyEarned: prev.totalMoneyEarned + earningsPerTick
       }));
+      setEarnings(earningsPerTick);
     }, 5000);
     return () => clearInterval(earnInterval);
   }, [player?.currentSeat, player?.idleRate, player?.bonus]);
@@ -149,7 +151,7 @@ function App() {
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-[#f0ebe5] text-[#4a3a3a]">
-        <CurrencyBar player={player} />
+        <CurrencyBar player={player} earnings={earnings} />
         <AdventurerBar player={player} onOpenProfile={() => setShowProfile(true)} />
         
         {/* 核心操作栏 */}
