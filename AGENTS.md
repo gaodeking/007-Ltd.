@@ -44,7 +44,20 @@
 
 8. **前端错误处理优化**
    - `client/src/App.jsx` - 添加加载状态和错误提示界面
-   - `client/vite.config.js` - 添加 `base: '/'` 确保资源路径正确
+   - `client/vite.config.js` - 添加 `base: './'` 确保资源路径正确
+
+9. **React 错误边界**
+   - `client/src/components/ErrorBoundary.jsx` - 新建，捕获渲染错误，显示友好提示
+   - `client/src/App.jsx` - 使用 ErrorBoundary 包裹主应用
+
+10. **前端 undefined 属性访问修复**
+    - `client/src/components/IdleHall.jsx` - `seatCooldown` 添加默认值 `0`
+    - `client/src/components/CurrencyBar.jsx` - `money`/`ticket`/`hair` 添加默认值
+    - `client/src/components/StatusBar.jsx` - `idleRate`/`bonus` 添加默认值
+    - `client/src/components/AdventurerBar.jsx` - `name` 添加默认值
+
+11. **Player 数据初始化增强**
+    - `client/src/App.jsx` - 为 player 数据添加完整默认值，防止字段缺失导致崩溃
 
 #### 核心需求
 - **永久网址**：朋友通过 Render 分配的固定网址直接加入游戏
