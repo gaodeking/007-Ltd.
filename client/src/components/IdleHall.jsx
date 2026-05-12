@@ -61,7 +61,7 @@ function IdleHall({ playerId, player, seats, setSeats, setPlayer }) {
     return 'bg-white hover:bg-[#faf5f5] cursor-pointer shadow-sm border border-[#e8e0e0]';
   };
 
-  const cooldownRemaining = Math.max(0, player.seatCooldown - Math.floor(Date.now() / 1000));
+  const cooldownRemaining = Math.max(0, (player.seatCooldown || 0) - Math.floor(Date.now() / 1000));
   const cooldownMinutes = Math.floor(cooldownRemaining / 60);
   const cooldownSeconds = cooldownRemaining % 60;
 

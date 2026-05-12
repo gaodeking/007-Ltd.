@@ -5,7 +5,7 @@ function AdventurerBar({ player, onOpenProfile }) {
         <div className="flex items-center gap-3">
           <span className="text-2xl">🧙</span>
           <div>
-            <span className="text-lg font-semibold">{player.name}</span>
+            <span className="text-lg font-semibold">{player.name || '无名冒险者'}</span>
             <span className="text-sm text-[#8a7a7a] ml-2">部队: 加班007</span>
           </div>
         </div>
