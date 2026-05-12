@@ -1,0 +1,133 @@
+﻿import { useState, useEffect } from 'react';
+import { playerApi, seatApi, gachaApi, taskApi } from './api';
+import CurrencyBar from './components/CurrencyBar';
+import AdventurerBar from './components/AdventurerBar';
+import IdleHall from './components/IdleHall';
+import ActivityPanel from './components/ActivityPanel';
+import ProfileModal from './components/ProfileModal';
+import GachaModal from './components/GachaModal';
+import TaskPanel from './components/TaskPanel';
+import StatusBar from './components/StatusBar';
+
+function App() {
+  const [playerId, setPlayerId] = useState(null);
+  const [player, setPlayer] = useState(null);
+  const [seats, setSeats] = useState([]);
+  const [showProfile, setShowProfile] = useState(false);
+  const [showGacha, setShowGacha] = useState(false);
+  const [showTasks, setShowTasks] = useState(false);
+  const [tasks, setTasks] = useState([]);
+
+  // Initialize player
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const res = await playerApi.init();
+        setPlayerId(res.data.playerId);
+        setPlayer(res.data.player);
+        localStorage.setItem('playerId', res.data.playerId);
+      } catch (err) {
+        console.error('Failed to initialize player:', err);
+      }
+    };
+    init();
+  }, []);
+
+  // Load seats
+  useEffect(() => {
+    if (!playerId) return;
+    const loadSeats = async () => {
+      try {
+        const res = await seatApi.getAll();
+        setSeats(res.data);
+      } catch (err) {
+        console.error('Failed to load seats:', err);
+      }
+    };
+    loadSeats();
+    const interval = setInterval(loadSeats, 5000);
+    return () => clearInterval(interval);
+  }, [playerId]);
+
+  // Load tasks
+  useEffect(() => {
+    if (!playerId) return;
+    const loadTasks = async () => {
+      try {
+        const res = await taskApi.getTasks(playerId);
+        setTasks(res.data);
+      } catch (err) {
+        console.error('Failed to load tasks:', err);
+      }
+    };
+    loadTasks();
+  }, [playerId]);
+
+  // Auto-save every 30 seconds
+  useEffect(() => {
+    if (!playerId || !player) return;
+    const saveInterval = setInterval(async () => {
+      try {
+        await playerApi.save(playerId, player);
+      } catch (err) {
+        console.error('Failed to save:', err);
+      }
+    }, 30000);
+    return () => clearInterval(saveInterval);
+  }, [playerId, player]);
+
+  if (!player) {
+    return (
+      <div className="min-h-screen bg-[#1a1a2e] flex items-center justify-center">
+        <div className="text-2xl text-gray-400">⚜️ 正在进入部队大厅...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#1a1a2e] text-gray-100">
+      <CurrencyBar player={player} />
+      <AdventurerBar player={player} onOpenProfile={() => setShowProfile(true)} />
+      <IdleHall 
+        playerId={playerId} 
+        player={player} 
+        seats={seats} 
+        setSeats={setSeats}
+        setPlayer={setPlayer}
+      />
+      <ActivityPanel />
+      <StatusBar player={player} />
+      
+      {showProfile && (
+        <ProfileModal 
+          player={player} 
+          onClose={() => setShowProfile(false)}
+          onUpdateName={async (name) => {
+            await playerApi.updateName(playerId, name);
+            setPlayer({ ...player, name });
+          }}
+        />
+      )}
+      
+      {showGacha && (
+        <GachaModal 
+          playerId={playerId}
+          player={player}
+          setPlayer={setPlayer}
+          onClose={() => setShowGacha(false)}
+        />
+      )}
+      
+      {showTasks && (
+        <TaskPanel 
+          playerId={playerId}
+          tasks={tasks}
+          setTasks={setTasks}
+          onClose={() => setShowTasks(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+export default App;

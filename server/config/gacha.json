@@ -1,0 +1,27 @@
+﻿{
+  "pools": {
+    "normal": {
+      "name": "普通池",
+      "cost": { "money": 100 },
+      "items": [
+        { "id": "coffee_machine", "emoji": "☕", "name": "咖啡机", "rarity": "common", "weight": 40, "bonus": 0.1, "description": "提升挂机效率10%" },
+        { "id": "ergonomic_chair", "emoji": "🪑", "name": "人体工学椅", "rarity": "common", "weight": 30, "bonus": 0.05, "description": "提升挂机效率5%" },
+        { "id": "slacking_phone", "emoji": "📱", "name": "摸鱼手机", "rarity": "rare", "weight": 20, "bonus": 0, "description": "解锁摸鱼小游戏" },
+        { "id": "excellent_employee", "emoji": "🏆", "name": "优秀员工", "rarity": "epic", "weight": 8, "bonus": 0.2, "description": "提升所有产出20%" },
+        { "id": "king_of_grind", "emoji": "👑", "name": "卷王之王", "rarity": "legendary", "weight": 2, "bonus": 0.5, "description": "提升所有产出50%" }
+      ]
+    }
+  },
+  "rarityColors": {
+    "common": "#9ca3af",
+    "rare": "#3b82f6",
+    "epic": "#a855f7",
+    "legendary": "#f59e0b"
+  },
+  "duplicateConversion": {
+    "common": { "hair": 1 },
+    "rare": { "hair": 2 },
+    "epic": { "hair": 5 },
+    "legendary": { "hair": 10 }
+  }
+}
