@@ -144,34 +144,6 @@
 #### 数据库迁移
 - 已执行 Supabase SQL：`ALTER TABLE players ADD COLUMN IF NOT EXISTS "lastHeartbeat" INTEGER DEFAULT 0;`
 
-#### 未解决问题（待后续迭代）
-
-**1. 玩家身份持久化问题**
-- **现象**：用户 "atls" 反映每次进入网页都需要重新注册，进度丢失
-- **原因**：玩家身份依赖 `localStorage`，清除缓存/无痕模式/换设备/换浏览器会丢失 playerId
-- **已实施**：v0.0.8 添加"复制 playerId"功能，用户可手动保存 ID
-- **长期方案**：实现邮箱绑定或第三方登录（Google/Discord）
-
-**2. 座位超时自动离开问题**
-- **现象**：玩家入座后约 15 分钟自动离开座位
-- **原因**：Render 免费实例 15 分钟无访问自动休眠 → 前端心跳请求延迟 50 秒 → `lastHeartbeat` 超时 → 玩家被踢出座位
-- **已实施**：v0.0.8 将 `SEAT_TIMEOUT` 从 30 秒调整为 60 秒
-- **根本解决**：需要迁移到不休眠的部署平台（见下方方案对比）
-
-**3. 24 小时挂机需求**
-- **需求**：玩家希望 24 小时挂机不掉线，实时产出金币
-- **当前限制**：Render 免费实例 15 分钟休眠，心跳中断
-- **低成本替代方案对比**：
-  | 平台 | 月成本 | 24 小时运行 | 迁移难度 | 推荐指数 |
-  |------|--------|------------|---------|---------|
-  | Render Starter | $25/月 | ✅ | 低（当前平台） | ★★★☆☆ |
-  | Fly.io | $0-5/月 | ✅ | 中 | ★★★★★ |
-  | Railway | $0-5/月 | ✅ | 中 | ★★★★☆ |
-  | Oracle Cloud 免费层 | $0 | ✅ | 高 | ★★★☆☆ |
-- **推荐方案**：Fly.io（成本最低，免费额度约$5/月，迁移难度适中）
-- **备选方案**：继续使用 Render + 实现离线收益系统（关闭页面后重新登录可领取收益，但挂机期间无实时产出）
-- **状态**：待用户确认迁移目标平台
-
 ---
 
 ### v0.0.4 (上一版本)
@@ -249,7 +221,6 @@
 - 需要设置 `server/.env` 中的 `DATABASE_URL`
 
 #### 已知问题
-- Render 免费实例 15 分钟无访问会自动休眠，下次访问会重新唤醒（延迟约 50 秒）
 - 必须使用 Supabase Session Pooler 连接字符串（IPv4），Direct Connection 会因 IPv6 失败
 
 ---
@@ -265,7 +236,7 @@
 - **前端**: React 18 + Vite 5 + Tailwind CSS 3 + Axios
 - **后端**: Express 4 + pg (PostgreSQL)
 - **数据库**: PostgreSQL (Supabase Session Pooler)
-- **部署**: Render (Web Service Free Tier)
+- **部署**: Render (Starter Plan, $7/月)
 - **代码仓库**: https://github.com/gaodeking/007-Ltd.
 - **当前网址**: https://zero07-ltd-2.onrender.com
 
