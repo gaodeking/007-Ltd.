@@ -6,13 +6,13 @@ function ActivityPanel() {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-4">
+    <div className="w-full px-4 py-4">
       <h2 className="text-lg font-bold mb-3 text-[#4a3a3a]">✨ 光之冒险</h2>
-      <div className="flex gap-4 overflow-x-auto pb-2">
+      <div className="grid grid-cols-3 gap-4">
         {activities.map((activity) => (
           <div
             key={activity.id}
-            className="min-w-[140px] bg-white rounded-xl border border-[#d4c8c8] p-4 flex flex-col items-center hover:border-[#d4a0a0] transition-colors cursor-not-allowed opacity-60 shadow-sm"
+            className="bg-white rounded-xl border border-[#d4c8c8] p-4 flex flex-col items-center hover:border-[#d4a0a0] transition-colors cursor-not-allowed opacity-60 shadow-sm"
           >
             <span className="text-4xl mb-2">{activity.emoji}</span>
             <span className="font-semibold text-[#4a3a3a]">{activity.name}</span>

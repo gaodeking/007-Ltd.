@@ -2,13 +2,16 @@
 import { playerApi, seatApi, gachaApi, taskApi } from './api';
 import ErrorBoundary from './components/ErrorBoundary';
 import CurrencyBar from './components/CurrencyBar';
-import AdventurerBar from './components/AdventurerBar';
 import IdleHall from './components/IdleHall';
 import ActivityPanel from './components/ActivityPanel';
 import ProfileModal from './components/ProfileModal';
 import GachaModal from './components/GachaModal';
 import TaskPanel from './components/TaskPanel';
 import StatusBar from './components/StatusBar';
+import ChatSidebar from './components/ChatSidebar';
+import PlayerInfoCard from './components/PlayerInfoCard';
+import AnnouncementPanel from './components/AnnouncementPanel';
+import ArcadePanel from './components/ArcadePanel';
 
 function App() {
   const [playerId, setPlayerId] = useState(null);
@@ -197,22 +200,21 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-[#f0ebe5] text-[#4a3a3a]">
-        <CurrencyBar player={player} earnings={earnings} earnTrigger={earnTrigger} />
-        <AdventurerBar player={player} onOpenProfile={() => setShowProfile(true)} />
+      <div className="min-h-screen bg-[#f0ebe5] text-[#4a3a3a] flex flex-col" style={{ minWidth: '1200px' }}>
+        <CurrencyBar />
         
         {/* 核心操作栏 */}
-        <div className="max-w-4xl mx-auto px-4 py-3">
+        <div className="px-4 py-3">
           <div className="flex justify-center gap-4">
             <button
               disabled={!!player.currentSeat}
               className={`flex-1 max-w-[200px] py-3 rounded-xl font-semibold transition-all shadow-sm flex items-center justify-center gap-2 text-white ${
                 player.currentSeat 
-                  ? 'bg-[#6aaa6a] cursor-not-allowed opacity-80' 
+                  ? 'bg-[#6aaa6a] cursor-not-allowed opacity-80 ring-2 ring-[#2d5a2d]' 
                   : 'bg-[#8fbc8f] hover:bg-[#7faa7f] cursor-pointer'
               }`}
             >
-              <span className="text-xl">{player.currentSeat ? '🛌' : '🛏️'}</span>
+              <span className="text-xl">{player.currentSeat ? '' : '🛏️'}</span>
               <span>{player.currentSeat ? '坐牢中...' : '入座休息'}</span>
             </button>
             
@@ -234,14 +236,42 @@ function App() {
           </div>
         </div>
         
-        <IdleHall 
-          playerId={playerId} 
-          player={player} 
-          seats={seats} 
-          setSeats={setSeats}
-          setPlayer={setPlayer}
-        />
-        <ActivityPanel />
+        {/* 主内容区 - Grid 布局 */}
+        <div className="flex-1 px-4 pb-4">
+          <div className="grid grid-cols-[1fr_2.5fr_1.2fr] gap-4 h-full">
+            
+            {/* 左侧栏 - 跨服通讯贝 */}
+            <div className="row-span-2">
+              <ChatSidebar />
+            </div>
+            
+            {/* 中间栏 - 座位网格 */}
+            <IdleHall 
+              playerId={playerId} 
+              player={player} 
+              seats={seats} 
+              setSeats={setSeats}
+              setPlayer={setPlayer}
+            />
+            
+            {/* 右侧栏容器 */}
+            <div className="row-span-2 flex flex-col gap-4">
+              <PlayerInfoCard 
+                player={player} 
+                earnings={earnings} 
+                earnTrigger={earnTrigger}
+                onOpenProfile={() => setShowProfile(true)} 
+              />
+              <AnnouncementPanel />
+              <ArcadePanel />
+            </div>
+            
+            {/* 中间栏底部 - 光之冒险 */}
+            <ActivityPanel />
+            
+          </div>
+        </div>
+        
         <StatusBar player={player} />
         
       {showProfile && (
