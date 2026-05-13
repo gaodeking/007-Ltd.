@@ -23,8 +23,8 @@ function NPCPeachBox() {
   return (
     <div className="absolute top-4 right-4 z-10">
       {currentBubble && (
-        <div className="absolute right-full top-0 mr-3 animate-fade-in-out">
-          <div className="bg-white border-2 border-[#4a3a3a] rounded-lg px-3 py-2 shadow-sm relative" style={{ maxWidth: 'min(320px, calc(50vw - 100px))' }}>
+        <div className="absolute right-full top-0 mr-3 animate-fade-in-out w-max">
+          <div className="bg-white border-2 border-[#4a3a3a] rounded-lg px-3 py-2 shadow-sm relative" style={{ maxWidth: '320px' }}>
             <p className="text-sm text-[#4a3a3a] leading-snug">{currentBubble}</p>
             <div className="absolute -right-2 top-3 w-0 h-0 border-t-[6px] border-t-transparent border-l-[8px] border-l-[#4a3a3a] border-b-[6px] border-b-transparent"></div>
             <div className="absolute -right-[5px] top-[14px] w-0 h-0 border-t-[5px] border-t-transparent border-l-[6px] border-l-white border-b-[5px] border-b-transparent"></div>
