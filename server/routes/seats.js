@@ -2,7 +2,7 @@
 const router = express.Router();
 const db = require('../models/db');
 
-const SEAT_TIMEOUT = 30;
+const SEAT_TIMEOUT = 60;
 const FIRST_SIT_COOLDOWN = 2;
 const CHANGE_SEAT_COOLDOWN = 2;
 const LEAVE_SEAT_COOLDOWN = 2;

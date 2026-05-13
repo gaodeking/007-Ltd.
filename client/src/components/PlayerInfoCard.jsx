@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import CopyIdButton from './CopyIdButton';
 
-function PlayerInfoCard({ player, earnings, earnTrigger, onOpenProfile }) {
+function PlayerInfoCard({ player, earnings, earnTrigger, onOpenProfile, playerId }) {
   const [showEarn, setShowEarn] = useState(false);
   const [earnAmount, setEarnAmount] = useState(0);
 
@@ -46,6 +47,15 @@ function PlayerInfoCard({ player, earnings, earnTrigger, onOpenProfile }) {
           )}
         </div>
       </div>
+      
+      {playerId && (
+        <div className="mt-3 pt-3 border-t border-[#d4c8c8] flex items-center justify-between">
+          <span className="text-xs text-[#8a7a7a] truncate flex-1 mr-2 font-mono">
+            ID: {playerId.substring(0, 8)}...
+          </span>
+          <CopyIdButton playerId={playerId} />
+        </div>
+      )}
     </div>
   );
 }

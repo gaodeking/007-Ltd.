@@ -260,7 +260,8 @@ function App() {
                 player={player} 
                 earnings={earnings} 
                 earnTrigger={earnTrigger}
-                onOpenProfile={() => setShowProfile(true)} 
+                onOpenProfile={() => setShowProfile(true)}
+                playerId={playerId}
               />
               <AnnouncementPanel />
               <ArcadePanel />
