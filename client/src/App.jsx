@@ -151,7 +151,7 @@ function App() {
   useEffect(() => {
     if (!player || !player.currentSeat) return;
     const earnInterval = setInterval(() => {
-      const earningsPerTick = Math.floor((player.idleRate || 10) * (player.bonus || 1.0) * 5);
+      const earningsPerTick = Math.floor((player.idleRate || 1) * (player.bonus || 1.0) * 5);
       setPlayer(prev => ({
         ...prev,
         money: prev.money + earningsPerTick,
