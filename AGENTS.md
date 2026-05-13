@@ -2,7 +2,44 @@
 
 ## 版本历史
 
-### v0.0.8 (当前版本)
+### v0.0.9 (当前版本)
+**主题：抽卡系统重构 + 经济数值重置 + 3D 翻转动画**
+
+#### 本次会话完成的改动
+
+**1. 抽卡结果弹窗重构**
+- 新建 `client/src/components/GachaResultModal.jsx`
+  - **单抽**：显示一张大卡片居中
+  - **十连抽**：显示 5x2 网格布局
+  - **3D 翻转动画**：卡牌初始为灰色背面（显示"?"），翻转后显示正面结果
+  - **阶梯动画**：十连抽卡牌依次翻转（间隔 0.1 秒）
+  - **顶部标题**：动态显示本次最高稀有度（如 "✨ SSR!"）
+  - **底部栏**：显示金币余额，提供"再来一次"和"关闭"按钮
+- 修改 `client/src/components/GachaModal.jsx`
+  - 移除旧的 `inventory` 相关逻辑和 UI
+  - 集成新的结果弹窗
+- `client/tailwind.config.js` - 添加 `flipReveal` 关键帧动画
+
+**2. 经济数值重置**
+- **挂机产出调整**：基础产出从 10 金币/秒改为 1 金币/秒（每 5 秒结算 5 金币）
+- `client/src/App.jsx` - `idleRate` 默认值从 10 改为 1
+- `server/models/db.js` - 建表语句 `idleRate` 默认值从 10 改为 1
+- **数据库清洗**：执行 SQL 脚本重置所有玩家数据
+  - `UPDATE players SET "bonus" = 1.0, "idleRate" = 1;`
+  - `DELETE FROM inventory;`
+  - `DELETE FROM gacha_log;`
+  - `UPDATE players SET "ssrCount" = 0, "srCount" = 0, "rCount" = 0;`
+
+**3. 代码清理与修复**
+- 移除所有对已删除字段 `ticket` 和 `hair` 的引用
+  - `server/routes/player.js`
+  - `server/routes/seats.js`
+  - `server/routes/tasks.js`
+- 修复因字段缺失导致的入座报错和任务领取报错
+
+---
+
+### v0.0.8 (上一版本)
 **主题：NPC 系统 + 上班打卡 + 坐牢按钮优化**
 
 #### 本次会话完成的改动
