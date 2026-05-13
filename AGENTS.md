@@ -37,6 +37,19 @@
   - `server/routes/tasks.js`
 - 修复因字段缺失导致的入座报错和任务领取报错
 
+**4. 修复后端 NaN 崩溃 (v0.0.9C)**
+- `server/routes/player.js` - `/save` 路由增加防御性编程
+  - 为 `idleRate` 和 `bonus` 添加默认值保护 (`|| 1`, `|| 1.0`)
+  - 防止因数据库字段缺失或 `null` 导致 `Math.floor` 计算结果为 `NaN`，进而引发 PostgreSQL 类型错误 (`invalid input syntax for type integer: "NaN"`)
+- `client/src/App.jsx` - 添加 `console.log` 调试日志
+  - 打印服务器返回的玩家原始数据，便于排查数值异常
+
+**5. 生产数据库修复 (v0.0.9D)**
+- **问题**：部分玩家数据 `idleRate` 仍为旧值 10，导致金币产出异常 (+52/5s)
+- **解决**：执行 SQL 强制更新特定玩家数据
+  - `UPDATE players SET "idleRate" = 1, "bonus" = 1.0 WHERE "id" = '...';`
+- **教训**：代码默认值修复了崩溃，但数据清洗需确保覆盖所有活跃玩家
+
 ---
 
 ### v0.0.8 (上一版本)
