@@ -12,11 +12,11 @@ router.get('/init', async (req, res) => {
       await db.run('INSERT INTO players (id) VALUES ($1)', [playerId]);
     }
 
-    let player = await db.get('SELECT "id", "name", "money", "ticket", "hair", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [playerId]);
+    let player = await db.get('SELECT "id", "name", "avatar", "money", "ticket", "hair", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [playerId]);
 
     if (!player) {
       await db.run('INSERT INTO players (id) VALUES ($1)', [playerId]);
-      player = await db.get('SELECT "id", "name", "money", "ticket", "hair", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [playerId]);
+      player = await db.get('SELECT "id", "name", "avatar", "money", "ticket", "hair", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [playerId]);
     }
 
     res.json({ playerId, player });
@@ -28,7 +28,7 @@ router.get('/init', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const player = await db.get('SELECT "id", "name", "money", "ticket", "hair", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [req.params.id]);
+    const player = await db.get('SELECT "id", "name", "avatar", "money", "ticket", "hair", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [req.params.id]);
     if (!player) return res.status(404).json({ error: 'Player not found' });
     res.json(player);
   } catch (err) {
@@ -98,7 +98,7 @@ router.post('/:id/save', async (req, res) => {
 
 router.get('/:id/offline-earnings', async (req, res) => {
   try {
-    const player = await db.get('SELECT "id", "name", "money", "ticket", "hair", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [req.params.id]);
+    const player = await db.get('SELECT "id", "name", "avatar", "money", "ticket", "hair", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [req.params.id]);
     if (!player) return res.status(404).json({ error: 'Player not found' });
 
     const now = Math.floor(Date.now() / 1000);
@@ -120,7 +120,7 @@ router.get('/:id/offline-earnings', async (req, res) => {
 
 router.post('/:id/claim-offline', async (req, res) => {
   try {
-    const player = await db.get('SELECT "id", "name", "money", "ticket", "hair", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [req.params.id]);
+    const player = await db.get('SELECT "id", "name", "avatar", "money", "ticket", "hair", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [req.params.id]);
     if (!player) return res.status(404).json({ error: 'Player not found' });
 
     const now = Math.floor(Date.now() / 1000);

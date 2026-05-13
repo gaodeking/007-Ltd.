@@ -68,6 +68,13 @@ function App() {
       try {
         const res = await seatApi.getAll();
         setSeats(res.data);
+        // 同步 currentSeat：从座位数据中找到当前玩家的座位
+        const mySeat = res.data.find(s => s.playerId === playerId);
+        if (mySeat && mySeat.seatId !== playerRef.current?.currentSeat) {
+          setPlayer(prev => ({ ...prev, currentSeat: mySeat.seatId }));
+        } else if (!mySeat && playerRef.current?.currentSeat) {
+          setPlayer(prev => ({ ...prev, currentSeat: null }));
+        }
       } catch (err) {
         console.error('Failed to load seats:', err);
       }

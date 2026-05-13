@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
     }
     
     const seats = await db.all(`
-      SELECT s."seatId" as "seatId", s."playerId" as "playerId", s.bonus, s.position, p.name as "playerName"
+      SELECT s."seatId" as "seatId", s."playerId" as "playerId", s.bonus, s.position, p.name as "playerName", p.avatar as "playerAvatar"
       FROM seats s
       LEFT JOIN players p ON s."playerId" = p.id
       ORDER BY s."seatId"

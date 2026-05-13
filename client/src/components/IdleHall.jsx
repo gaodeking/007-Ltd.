@@ -16,6 +16,7 @@ function IdleHall({ playerId, player, seats, setSeats, setPlayer }) {
       setSeats(res.data);
       setPlayer(prev => ({ ...prev, currentSeat: seatId }));
       setMessage('✅ 成功入座！');
+      setTimeout(() => setMessage(''), 2000);
     } catch (err) {
       const errorMsg = err.response?.data?.error || '入座失败';
       setMessage(`❌ ${errorMsg}`);
@@ -35,6 +36,7 @@ function IdleHall({ playerId, player, seats, setSeats, setPlayer }) {
       setSeats(res.data);
       setPlayer(prev => ({ ...prev, currentSeat: null }));
       setMessage('✅ 已离开座位');
+      setTimeout(() => setMessage(''), 2000);
     } catch (err) {
       const errorMsg = err.response?.data?.error || '离开失败';
       setMessage(`❌ ${errorMsg}`);
@@ -45,7 +47,7 @@ function IdleHall({ playerId, player, seats, setSeats, setPlayer }) {
 
   const getSeatEmoji = (seat) => {
     if (seat.playerId === playerId) return player.avatar || '🧙‍♂️';
-    if (seat.playerId) return '⚔️';
+    if (seat.playerId) return seat.playerAvatar || '⚔️';
     return '🛏️';
   };
 
