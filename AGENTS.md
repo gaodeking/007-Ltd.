@@ -2,7 +2,35 @@
 
 ## 版本历史
 
-### v0.0.5B (当前版本)
+### v0.0.6A (当前版本)
+**主题：冒险者头像系统**
+
+#### 本次会话完成的改动
+
+**1. 数据库迁移**
+- 已执行 Supabase SQL：`ALTER TABLE players ADD COLUMN IF NOT EXISTS "avatar" TEXT DEFAULT '🧙‍♂️';`
+- `server/models/db.js` - 在建表语句中添加 `avatar` 字段
+
+**2. 后端 API**
+- `server/routes/player.js` - 新增 `PUT /player/:id/avatar` 接口，支持更新玩家头像
+
+**3. 前端交互**
+- `client/src/api/index.js` - 添加 `updateAvatar` 方法
+- `client/src/components/ProfileModal.jsx` - 添加 3×5 头像选择网格
+  - 15 个预设 Emoji（法师、精灵、吸血鬼、僵尸、人鱼、仙子、蒸汽浴、攀岩、杂耍、瑜伽、巨龙、狐狸、猫咪、狗狗、狮子）
+  - 鼠标悬停显示名称，点击选中高亮
+  - 点击立即调用 API 保存
+
+**4. 前端显示**
+- `client/src/components/AdventurerBar.jsx` - 顶部栏显示玩家头像
+- `client/src/components/IdleHall.jsx` - 座位图标优先显示玩家头像
+
+**5. 状态同步**
+- `client/src/App.jsx` - 初始化 `avatar` 默认值，处理更新逻辑
+
+---
+
+### v0.0.5B (上一版本)
 **主题：家庭开发环境迭代 - UI 重构 + 金币系统 + 座位优化**
 
 #### 本次会话完成的改动

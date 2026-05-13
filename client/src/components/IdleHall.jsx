@@ -44,7 +44,7 @@ function IdleHall({ playerId, player, seats, setSeats, setPlayer }) {
   };
 
   const getSeatEmoji = (seat) => {
-    if (seat.playerId === playerId) return '🧙';
+    if (seat.playerId === playerId) return player.avatar || '🧙‍♂️';
     if (seat.playerId) return '⚔️';
     return '🛏️';
   };

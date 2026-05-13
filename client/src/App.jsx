@@ -37,7 +37,8 @@ function App() {
         const playerData = res.data.player || {};
         setPlayer({
           name: playerData.name || '无名冒险者',
-          money: playerData.money || 100,
+          avatar: playerData.avatar || '‍♂️',
+          money: playerData.money || 0,
           ticket: playerData.ticket || 0,
           hair: playerData.hair || 0,
           idleRate: playerData.idleRate || 10,
@@ -236,16 +237,20 @@ function App() {
         <ActivityPanel />
         <StatusBar player={player} />
         
-        {showProfile && (
-          <ProfileModal 
-            player={player} 
-            onClose={() => setShowProfile(false)}
-            onUpdateName={async (name) => {
-              await playerApi.updateName(playerId, name);
-              setPlayer({ ...player, name });
-            }}
-          />
-        )}
+      {showProfile && (
+        <ProfileModal 
+          player={player} 
+          onClose={() => setShowProfile(false)}
+          onUpdateName={async (name) => {
+            await playerApi.updateName(playerId, name);
+            setPlayer({ ...player, name });
+          }}
+          onUpdateAvatar={async (avatar) => {
+            await playerApi.updateAvatar(playerId, avatar);
+            setPlayer({ ...player, avatar });
+          }}
+        />
+      )}
         
         {showGacha && (
           <GachaModal 

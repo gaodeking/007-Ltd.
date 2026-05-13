@@ -1,6 +1,24 @@
 import { useState } from 'react';
 
-function ProfileModal({ player, onClose, onUpdateName }) {
+const AVATARS = [
+  { emoji: '‍♂️', name: '法师' },
+  { emoji: '🧝', name: '精灵' },
+  { emoji: '', name: '吸血鬼' },
+  { emoji: '🧟', name: '僵尸' },
+  { emoji: '🧜', name: '人鱼' },
+  { emoji: '', name: '仙子' },
+  { emoji: '🧖', name: '蒸汽浴' },
+  { emoji: '🧗', name: '攀岩' },
+  { emoji: '🤹', name: '杂耍' },
+  { emoji: '🧘', name: '瑜伽' },
+  { emoji: '🐉', name: '巨龙' },
+  { emoji: '', name: '狐狸' },
+  { emoji: '🐱', name: '猫咪' },
+  { emoji: '🐶', name: '狗狗' },
+  { emoji: '', name: '狮子' },
+];
+
+function ProfileModal({ player, onClose, onUpdateName, onUpdateAvatar }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(player.name);
 
@@ -27,7 +45,7 @@ function ProfileModal({ player, onClose, onUpdateName }) {
         
         <div className="p-6">
           <div className="text-center mb-6">
-            <div className="text-6xl mb-3">🧙</div>
+            <div className="text-6xl mb-3">{player.avatar || '‍♂️'}</div>
             {editing ? (
               <div className="flex items-center justify-center gap-2">
                 <input
@@ -49,9 +67,29 @@ function ProfileModal({ player, onClose, onUpdateName }) {
             <div className="text-sm text-[#6b5b5b] mt-1">部队: 加班007</div>
           </div>
 
+          <div className="mb-6">
+            <h3 className="font-semibold mb-3 text-[#4a3a3a] text-center"> 选择头像</h3>
+            <div className="grid grid-cols-5 gap-3">
+              {AVATARS.map((a) => (
+                <button
+                  key={a.emoji}
+                  onClick={() => onUpdateAvatar(a.emoji)}
+                  title={a.name}
+                  className={`aspect-square rounded-lg flex items-center justify-center text-3xl transition-all hover:scale-110 ${
+                    player.avatar === a.emoji
+                      ? 'ring-2 ring-[#b76e79] bg-[#f5e8e8]'
+                      : 'bg-[#f5f0f0] hover:bg-[#faf5f5]'
+                  }`}
+                >
+                  {a.emoji}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="space-y-4">
             <div className="bg-[#f5f0f0] rounded-lg p-4">
-              <h3 className="font-semibold mb-2 text-[#4a3a3a]">📊 冒险者信息</h3>
+              <h3 className="font-semibold mb-2 text-[#4a3a3a]"> 冒险者信息</h3>
               <div className="space-y-1 text-sm text-[#6b5b5b]">
                 <div>等级: 1</div>
                 <div>总挂机时长: {formatTime(player.totalIdleTime)}</div>

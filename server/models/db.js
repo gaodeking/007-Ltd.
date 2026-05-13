@@ -12,21 +12,21 @@ async function initDB() {
   try {
     await client.query(`
       CREATE TABLE IF NOT EXISTS players (
-        "id" TEXT PRIMARY KEY,
-        "name" TEXT DEFAULT '无名冒险者',
-        "money" INTEGER DEFAULT 100,
-        "ticket" INTEGER DEFAULT 0,
-        "hair" INTEGER DEFAULT 0,
-        "idleRate" INTEGER DEFAULT 10,
-        "bonus" REAL DEFAULT 1.0,
-        "currentSeat" INTEGER DEFAULT NULL,
-        "seatCooldown" INTEGER DEFAULT 0,
-        "totalIdleTime" INTEGER DEFAULT 0,
-        "totalMoneyEarned" INTEGER DEFAULT 0,
-        "totalGachaCount" INTEGER DEFAULT 0,
-        "lastSave" INTEGER DEFAULT EXTRACT(EPOCH FROM NOW())::INTEGER,
-        "lastHeartbeat" INTEGER DEFAULT 0,
-        "createdAt" INTEGER DEFAULT EXTRACT(EPOCH FROM NOW())::INTEGER
+        id TEXT PRIMARY KEY,
+        name TEXT DEFAULT '无名冒险者',
+        avatar TEXT DEFAULT '🧙‍♂️',
+        money INTEGER DEFAULT 0,
+        ticket INTEGER DEFAULT 0,
+        hair INTEGER DEFAULT 0,
+        idleRate INTEGER DEFAULT 10,
+        bonus REAL DEFAULT 1.0,
+        currentSeat INTEGER DEFAULT NULL,
+        seatCooldown INTEGER DEFAULT 0,
+        totalIdleTime INTEGER DEFAULT 0,
+        totalMoneyEarned INTEGER DEFAULT 0,
+        totalGachaCount INTEGER DEFAULT 0,
+        lastSave INTEGER DEFAULT EXTRACT(EPOCH FROM NOW())::INTEGER,
+        createdAt INTEGER DEFAULT EXTRACT(EPOCH FROM NOW())::INTEGER
       )
     `);
 

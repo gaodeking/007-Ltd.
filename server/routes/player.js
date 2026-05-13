@@ -42,8 +42,21 @@ router.put('/:id/name', async (req, res) => {
     if (!name || name.length > 20) {
       return res.status(400).json({ error: 'Invalid name' });
     }
-    await db.run('UPDATE players SET "name" = $1 WHERE id = $2', [name, req.params.id]);
+    await db.run('UPDATE players SET name = $1 WHERE id = $2', [name, req.params.id]);
     res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.put('/:id/avatar', async (req, res) => {
+  try {
+    const { avatar } = req.body;
+    if (!avatar || avatar.length > 10) {
+      return res.status(400).json({ error: 'Invalid avatar' });
+    }
+    await db.run('UPDATE players SET avatar = $1 WHERE id = $2', [avatar, req.params.id]);
+    res.json({ success: true, avatar });
   } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
   }

@@ -18,8 +18,8 @@ export const playerApi = {
   init: () => api.get('/player/init'),
   get: (id) => api.get(`/player/${id}`),
   updateName: (id, name) => api.put(`/player/${id}/name`, { name }),
+  updateAvatar: (id, avatar) => api.put(`/player/${id}/avatar`, { avatar }),
   save: (id, data) => api.post(`/player/${id}/save`, data),
-  heartbeat: (id) => api.post(`/player/${id}/heartbeat`),
   getOfflineEarnings: (id) => api.get(`/player/${id}/offline-earnings`),
   claimOffline: (id) => api.post(`/player/${id}/claim-offline`),
 };
