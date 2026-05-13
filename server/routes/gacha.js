@@ -3,92 +3,153 @@ const router = express.Router();
 const db = require('../models/db');
 const gachaConfig = require('../config/gacha.json');
 
-router.get('/pool', (req, res) => {
-  res.json(gachaConfig.pools.normal);
-});
-
-router.post('/pull', async (req, res) => {
+router.get('/pool', async (req, res) => {
   try {
-    const { playerId } = req.body;
-
-    const player = await db.get('SELECT "id", "name", "money", "ticket", "hair", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [playerId]);
-    if (!player) return res.status(404).json({ error: 'Player not found' });
-
+    const playerId = req.headers['x-player-id'];
     const pool = gachaConfig.pools.normal;
-    const cost = pool.cost.money;
-
-    if (player.money < cost) {
-      return res.status(400).json({ error: '金币不足' });
-    }
-
-    const totalWeight = pool.items.reduce((sum, item) => sum + item.weight, 0);
-    let random = Math.random() * totalWeight;
-    let selectedItem = null;
-
-    for (const item of pool.items) {
-      random -= item.weight;
-      if (random <= 0) {
-        selectedItem = item;
-        break;
-      }
-    }
-
-    await db.run('UPDATE players SET "money" = "money" - $1, "totalGachaCount" = "totalGachaCount" + 1 WHERE id = $2',
-      [cost, playerId]);
-
-    const existing = await db.get('SELECT * FROM inventory WHERE "playerId" = $1 AND "itemId" = $2', [playerId, selectedItem.id]);
-
-    let isDuplicate = false;
-    let conversion = null;
-
-    if (existing) {
-      isDuplicate = true;
-      conversion = gachaConfig.duplicateConversion[selectedItem.rarity];
-      await db.run('UPDATE inventory SET "quantity" = "quantity" + 1 WHERE "playerId" = $1 AND "itemId" = $2',
-        [playerId, selectedItem.id]);
-      await db.run('UPDATE players SET "hair" = "hair" + $1 WHERE id = $2',
-        [conversion.hair, playerId]);
-    } else {
-      await db.run('INSERT INTO inventory ("playerId", "itemId", "quantity") VALUES ($1, $2, 1)',
-        [playerId, selectedItem.id]);
-
-      if (selectedItem.bonus > 0) {
-        await db.run('UPDATE players SET "bonus" = "bonus" + $1 WHERE id = $2',
-          [selectedItem.bonus, playerId]);
-      }
-    }
-
-    await db.run('INSERT INTO gacha_log ("playerId", "itemId", "rarity") VALUES ($1, $2, $3)',
-      [playerId, selectedItem.id, selectedItem.rarity]);
-
-    res.json({
-      item: selectedItem,
-      isDuplicate,
-      conversion,
-      color: gachaConfig.rarityColors[selectedItem.rarity]
+    
+    // Get stock info
+    const stocks = await db.all('SELECT "prizeId", "remaining", "total" FROM prize_stock');
+    const stockMap = {};
+    stocks.forEach(s => stockMap[s.prizeId] = s);
+    
+    // Get personal counts
+    const personalCounts = await db.all(
+      'SELECT "rarity", COUNT(*) as count FROM gacha_log WHERE "playerId" = $1 GROUP BY "rarity"',
+      [playerId]
+    );
+    const countMap = {};
+    personalCounts.forEach(c => countMap[c.rarity] = parseInt(c.count));
+    
+    // Assemble response
+    const itemsWithStock = pool.items.map(item => {
+      const stock = item.stockRef ? stockMap[item.stockRef] : null;
+      const limit = gachaConfig.personalLimits[item.rarity];
+      const personalCount = countMap[item.rarity] || 0;
+      const isExhausted = stock ? stock.remaining <= 0 : false;
+      const isLimitReached = limit && personalCount >= limit;
+      
+      return {
+        ...item,
+        remaining: stock ? stock.remaining : '∞',
+        total: stock ? stock.total : '∞',
+        personalCount,
+        personalLimit: limit || '∞',
+        isExhausted,
+        isLimitReached,
+        isUnavailable: isExhausted || isLimitReached
+      };
     });
+    
+    res.json({ ...pool, items: itemsWithStock });
   } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-router.get('/inventory/:playerId', async (req, res) => {
+router.post('/pull', async (req, res) => {
   try {
-    const inventory = await db.all(`
-      SELECT i."id", i."playerId", i."itemId", i."quantity",
-        CASE
-          WHEN i."itemId" = 'coffee_machine' THEN '☕ 咖啡机'
-          WHEN i."itemId" = 'ergonomic_chair' THEN '🪑 人体工学椅'
-          WHEN i."itemId" = 'slacking_phone' THEN '📱 摸鱼手机'
-          WHEN i."itemId" = 'excellent_employee' THEN '🏆 优秀员工'
-          WHEN i."itemId" = 'king_of_grind' THEN '👑 卷王之王'
-          ELSE i."itemId"
-        END as "displayName"
-      FROM inventory i
-      WHERE i."playerId" = $1
-    `, [req.params.playerId]);
-    res.json(inventory);
+    const { playerId, count = 1 } = req.body;
+    
+    const player = await db.get('SELECT "id", "name", "money", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt", "ssrCount", "srCount", "rCount" FROM players WHERE id = $1', [playerId]);
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+    
+    const pool = gachaConfig.pools.normal;
+    const cost = count === 10 ? pool.tenCost : pool.singleCost * count;
+    
+    if (player.money < cost) {
+      return res.status(400).json({ error: '金币不足' });
+    }
+    
+    // Batch query: get all stocks and personal counts once
+    const stocks = await db.all('SELECT "prizeId", "remaining" FROM prize_stock');
+    const stockMap = {};
+    stocks.forEach(s => stockMap[s.prizeId] = s.remaining);
+    
+    const personalCounts = await db.all(
+      'SELECT "rarity", COUNT(*) as count FROM gacha_log WHERE "playerId" = $1 GROUP BY "rarity"',
+      [playerId]
+    );
+    const countMap = {};
+    personalCounts.forEach(c => countMap[c.rarity] = parseInt(c.count));
+    
+    const results = [];
+    const stockUpdates = {};
+    const rarityCounts = { ssr: 0, sr: 0, r: 0 };
+    
+    for (let i = 0; i < count; i++) {
+      // Filter available items
+      const availableItems = pool.items.filter(item => {
+        if (!item.stockRef) return true; // Thanks for participating is infinite
+        if (stockMap[item.stockRef] <= 0) return false; // Stock exhausted
+        const limit = gachaConfig.personalLimits[item.rarity];
+        const currentCount = (countMap[item.rarity] || 0) + (rarityCounts[item.rarity] || 0);
+        if (limit && currentCount >= limit) return false; // Personal limit reached
+        return true;
+      });
+      
+      if (availableItems.length === 0) break; // No items available
+      
+      // Weighted random
+      const totalWeight = availableItems.reduce((sum, item) => sum + item.weight, 0);
+      let random = Math.random() * totalWeight;
+      let selectedItem = null;
+      
+      for (const item of availableItems) {
+        random -= item.weight;
+        if (random <= 0) {
+          selectedItem = item;
+          break;
+        }
+      }
+      
+      if (!selectedItem) selectedItem = availableItems[availableItems.length - 1];
+      
+      // Track stock updates and rarity counts
+      if (selectedItem.stockRef) {
+        stockUpdates[selectedItem.stockRef] = (stockUpdates[selectedItem.stockRef] || 0) + 1;
+      }
+      if (selectedItem.rarity !== 'n') {
+        rarityCounts[selectedItem.rarity] = (rarityCounts[selectedItem.rarity] || 0) + 1;
+      }
+      
+      results.push({
+        item: selectedItem,
+        color: gachaConfig.rarityColors[selectedItem.rarity]
+      });
+    }
+    
+    // Deduct money
+    await db.run('UPDATE players SET "money" = "money" - $1, "totalGachaCount" = "totalGachaCount" + $2 WHERE id = $3',
+      [cost, count, playerId]);
+    
+    // Update stock
+    for (const [prizeId, deduct] of Object.entries(stockUpdates)) {
+      await db.run('UPDATE prize_stock SET remaining = remaining - $1 WHERE "prizeId" = $2 AND remaining >= $1',
+        [deduct, prizeId]);
+    }
+    
+    // Update personal counts
+    for (const [rarity, addCount] of Object.entries(rarityCounts)) {
+      if (addCount > 0) {
+        const countField = rarity === 'ssr' ? 'ssrCount' : rarity === 'sr' ? 'srCount' : 'rCount';
+        await db.run(`UPDATE players SET "${countField}" = "${countField}" + $1 WHERE id = $2`,
+          [addCount, playerId]);
+      }
+    }
+    
+    // Record gacha logs
+    for (const result of results) {
+      await db.run('INSERT INTO gacha_log ("playerId", "itemId", "rarity") VALUES ($1, $2, $3)',
+        [playerId, result.item.id, result.item.rarity]);
+    }
+    
+    res.json({
+      results,
+      count: results.length
+    });
   } catch (err) {
+    console.error('Pull error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

@@ -16,19 +16,45 @@ async function initDB() {
         name TEXT DEFAULT '无名冒险者',
         avatar TEXT DEFAULT '🧙‍♂️',
         money INTEGER DEFAULT 0,
-        ticket INTEGER DEFAULT 0,
-        hair INTEGER DEFAULT 0,
-        idleRate INTEGER DEFAULT 10,
+        idleRate INTEGER DEFAULT 1,
         bonus REAL DEFAULT 1.0,
         currentSeat INTEGER DEFAULT NULL,
         seatCooldown INTEGER DEFAULT 0,
         totalIdleTime INTEGER DEFAULT 0,
         totalMoneyEarned INTEGER DEFAULT 0,
         totalGachaCount INTEGER DEFAULT 0,
+        "ssrCount" INTEGER DEFAULT 0,
+        "srCount" INTEGER DEFAULT 0,
+        "rCount" INTEGER DEFAULT 0,
         lastSave INTEGER DEFAULT EXTRACT(EPOCH FROM NOW())::INTEGER,
         createdAt INTEGER DEFAULT EXTRACT(EPOCH FROM NOW())::INTEGER
       )
     `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS prize_stock (
+        "prizeId" TEXT PRIMARY KEY,
+        "remaining" INTEGER NOT NULL,
+        "total" INTEGER NOT NULL,
+        "active" BOOLEAN DEFAULT TRUE
+      )
+    `);
+
+    // Initialize prize stock if empty
+    const prizeStockResult = await client.query('SELECT COUNT(*) as count FROM prize_stock');
+    const prizeStockCount = parseInt(prizeStockResult.rows[0].count);
+    if (prizeStockCount === 0) {
+      const prizes = [
+        ['ff14_card', 5, 5],
+        ['phone_credit', 30, 30],
+        ['milk_tea', 30, 30],
+        ['vita_tea', 50, 50],
+        ['coca_cola', 50, 50],
+      ];
+      for (const [prizeId, remaining, total] of prizes) {
+        await client.query('INSERT INTO prize_stock ("prizeId", "remaining", "total") VALUES ($1, $2, $3)', [prizeId, remaining, total]);
+      }
+    }
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS seats (
@@ -102,10 +128,10 @@ async function initDB() {
 
     if (taskCount === 0) {
       const tasks = [
-        [today, '连续挂机1小时', 3600, '{"ticket": 2}', 'idle_time'],
-        [today, '抽奖3次', 3, '{"hair": 1}', 'gacha_count'],
-        [today, '累计获得1000金币', 1000, '{"ticket": 1, "money": 200}', 'money_earned'],
-        [today, '更换床位1次', 1, '{"hair": 1}', 'seat_change'],
+        [today, '连续挂机1小时', 3600, '{"money": 200}', 'idle_time'],
+        [today, '抽奖3次', 3, '{"money": 100}', 'gacha_count'],
+        [today, '累计获得1000金币', 1000, '{"money": 200}', 'money_earned'],
+        [today, '更换床位1次', 1, '{"money": 100}', 'seat_change'],
       ];
       for (const task of tasks) {
         await client.query(

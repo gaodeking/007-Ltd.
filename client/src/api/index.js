@@ -33,8 +33,7 @@ export const seatApi = {
 
 export const gachaApi = {
   getPool: () => api.get('/gacha/pool'),
-  pull: (playerId) => api.post('/gacha/pull', { playerId }),
-  getInventory: (playerId) => api.get(`/gacha/inventory/${playerId}`),
+  pull: (playerId, count = 1) => api.post('/gacha/pull', { playerId, count }),
 };
 
 export const taskApi = {

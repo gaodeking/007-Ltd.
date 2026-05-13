@@ -40,11 +40,9 @@ function App() {
         const playerData = res.data.player || {};
         setPlayer({
           name: playerData.name || '无名冒险者',
-          avatar: playerData.avatar || '‍♂️',
+          avatar: playerData.avatar || '🧙‍♂️',
           money: playerData.money || 0,
-          ticket: playerData.ticket || 0,
-          hair: playerData.hair || 0,
-          idleRate: playerData.idleRate || 10,
+          idleRate: playerData.idleRate || 1,
           bonus: playerData.bonus || 1.0,
           currentSeat: playerData.currentSeat || null,
           seatCooldown: playerData.seatCooldown || 0,

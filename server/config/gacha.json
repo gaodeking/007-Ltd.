@@ -2,26 +2,27 @@
   "pools": {
     "normal": {
       "name": "普通池",
-      "cost": { "money": 100 },
+      "singleCost": 720,
+      "tenCost": 6480,
       "items": [
-        { "id": "coffee_machine", "emoji": "☕", "name": "咖啡机", "rarity": "common", "weight": 40, "bonus": 0.1, "description": "提升挂机效率10%" },
-        { "id": "ergonomic_chair", "emoji": "🪑", "name": "人体工学椅", "rarity": "common", "weight": 30, "bonus": 0.05, "description": "提升挂机效率5%" },
-        { "id": "slacking_phone", "emoji": "📱", "name": "摸鱼手机", "rarity": "rare", "weight": 20, "bonus": 0, "description": "解锁摸鱼小游戏" },
-        { "id": "excellent_employee", "emoji": "🏆", "name": "优秀员工", "rarity": "epic", "weight": 8, "bonus": 0.2, "description": "提升所有产出20%" },
-        { "id": "king_of_grind", "emoji": "👑", "name": "卷王之王", "rarity": "legendary", "weight": 2, "bonus": 0.5, "description": "提升所有产出50%" }
+        { "id": "ff14_card", "emoji": "🎮", "name": "FF14 30元点卡", "rarity": "ssr", "weight": 20, "stockRef": "ff14_card", "description": "最终幻想14游戏点卡" },
+        { "id": "phone_credit", "emoji": "📱", "name": "10元话费", "rarity": "sr", "weight": 90, "stockRef": "phone_credit", "description": "手机话费充值" },
+        { "id": "milk_tea", "emoji": "🧋", "name": "10元奶茶券", "rarity": "sr", "weight": 90, "stockRef": "milk_tea", "description": "奶茶店兑换券" },
+        { "id": "vita_tea", "emoji": "🍋", "name": "维他柠檬茶", "rarity": "r", "weight": 200, "stockRef": "vita_tea", "description": "经典港式柠檬茶" },
+        { "id": "coca_cola", "emoji": "🥤", "name": "可口可乐", "rarity": "r", "weight": 200, "stockRef": "coca_cola", "description": "快乐肥宅水" },
+        { "id": "thanks", "emoji": "😅", "name": "谢谢参与", "rarity": "n", "weight": 9400, "stockRef": null, "description": "下次一定" }
       ]
     }
   },
   "rarityColors": {
-    "common": "#9ca3af",
-    "rare": "#3b82f6",
-    "epic": "#a855f7",
-    "legendary": "#f59e0b"
+    "ssr": "#f59e0b",
+    "sr": "#a855f7",
+    "r": "#3b82f6",
+    "n": "#9ca3af"
   },
-  "duplicateConversion": {
-    "common": { "hair": 1 },
-    "rare": { "hair": 2 },
-    "epic": { "hair": 5 },
-    "legendary": { "hair": 10 }
+  "personalLimits": {
+    "ssr": 2,
+    "sr": 4,
+    "r": 15
   }
 }
