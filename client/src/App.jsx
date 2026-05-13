@@ -51,6 +51,7 @@ function App() {
           totalGachaCount: playerData.totalGachaCount || 0,
           lastSave: playerData.lastSave || Math.floor(Date.now() / 1000),
         });
+        console.log('🔍 [DEBUG] Player Data from Server:', res.data.player);
         localStorage.setItem('playerId', res.data.playerId);
       } catch (err) {
         console.error('Failed to initialize player:', err);

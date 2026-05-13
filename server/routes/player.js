@@ -70,9 +70,13 @@ router.post('/:id/save', async (req, res) => {
     
     // ⚠️ 不确定：后端验证逻辑 - 取前端值和后端计算值的较大者
     // 后续可能需要调整为强制使用后端计算值或其他策略
+    // 防御性编程：防止字段缺失导致 NaN 错误
+    const safeIdleRate = player.idleRate || 1;
+    const safeBonus = player.bonus || 1.0;
+    
     let backendEarnings = 0;
     if (player.currentSeat && elapsed > 0) {
-      backendEarnings = Math.floor(elapsed * player.idleRate * player.bonus);
+      backendEarnings = Math.floor(elapsed * safeIdleRate * safeBonus);
     }
     
     const { money, idleRate, bonus, currentSeat, seatCooldown, totalIdleTime, totalMoneyEarned, totalGachaCount } = req.body;
