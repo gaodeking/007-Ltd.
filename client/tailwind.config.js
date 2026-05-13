@@ -17,10 +17,15 @@ export default {
           '80%': { opacity: '1', transform: 'translateY(0) scale(1)' },
           '100%': { opacity: '0', transform: 'translateY(-10px) scale(0.95)' },
         },
+        flipIn: {
+          '0%': { transform: 'rotateY(90deg)', opacity: '0' },
+          '100%': { transform: 'rotateY(0deg)', opacity: '1' },
+        },
       },
       animation: {
         'float-up': 'floatUp 1.5s ease-out forwards',
         'fade-in-out': 'fadeInOut 6s ease-in-out forwards',
+        'flip-in': 'flipIn 0.5s ease-out forwards',
       },
     },
   },
