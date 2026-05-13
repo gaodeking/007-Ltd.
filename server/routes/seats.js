@@ -66,8 +66,8 @@ router.post('/:seatId/sit', async (req, res) => {
     await db.run('UPDATE seats SET "playerId" = $1 WHERE "seatId" = $2', [playerId, seatId]);
     
     const cooldownDuration = player.currentSeat ? CHANGE_SEAT_COOLDOWN : FIRST_SIT_COOLDOWN;
-    await db.run('UPDATE players SET "currentSeat" = $1, "seatCooldown" = $2 WHERE id = $3',
-      [seatId, now + cooldownDuration, playerId]);
+    await db.run('UPDATE players SET "currentSeat" = $1, "seatCooldown" = $2, "lastHeartbeat" = $3 WHERE id = $4',
+      [seatId, now + cooldownDuration, now, playerId]);
 
     res.json({ success: true, seatId });
   } catch (err) {
