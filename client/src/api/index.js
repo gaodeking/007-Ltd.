@@ -22,6 +22,7 @@ export const playerApi = {
   save: (id, data) => api.post(`/player/${id}/save`, data),
   getOfflineEarnings: (id) => api.get(`/player/${id}/offline-earnings`),
   claimOffline: (id) => api.post(`/player/${id}/claim-offline`),
+  heartbeat: (id) => api.post(`/player/${id}/heartbeat`),
 };
 
 export const seatApi = {
