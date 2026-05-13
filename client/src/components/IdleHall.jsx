@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { seatApi } from '../api';
+import NPCPeachBox from './NPCPeachBox';
 
 function IdleHall({ playerId, player, seats, setSeats, setPlayer }) {
   const [loading, setLoading] = useState(false);
@@ -69,8 +70,10 @@ function IdleHall({ playerId, player, seats, setSeats, setPlayer }) {
 
   return (
     <div className="w-full px-4 py-6 idle-hall">
-      <div className="bg-white rounded-xl border border-[#d4c8c8] p-6 shadow-sm h-full flex flex-col">
+      <div className="bg-white rounded-xl border border-[#d4c8c8] p-6 shadow-sm h-full flex flex-col relative">
         <h2 className="text-xl font-bold mb-4 text-center text-[#4a3a3a]">007公司工位</h2>
+        
+        <NPCPeachBox />
         
         <div className="grid grid-cols-5 gap-4 max-w-md mx-auto mb-4">
           {seats.map((seat) => (

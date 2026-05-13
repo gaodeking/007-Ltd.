@@ -2,7 +2,31 @@
 
 ## 版本历史
 
-### v0.0.7 (当前版本)
+### v0.0.8 (当前版本)
+**主题：NPC 系统 + 上班打卡 + 坐牢按钮优化**
+
+#### 本次会话完成的改动
+
+**1. NPC 蒸馏桃子盒子**
+- 新建 `client/src/components/NPCPeachBox.jsx` - NPC 主组件
+  - 使用自定义图片 `peach-box-npc.png`（120px 宽度）
+  - 随机间隔 10-20 秒触发气泡
+  - 气泡显示 6 秒后消失
+  - 漫画式气泡样式（带尾巴指向 NPC）
+- 新建 `client/src/data/npcDialogues.js` - 10 句气泡台词配置
+- `client/src/components/IdleHall.jsx` - 集成 NPC 组件到工位区域右上角
+- `client/tailwind.config.js` - 添加 `fadeInOut` 气泡动画
+
+**2. 每日任务改为上班打卡**
+- `client/src/App.jsx` - 按钮文字"每日任务"→"上班打卡"
+- `client/src/components/TaskPanel.jsx` - 弹窗标题"每日任务"→"上班打卡"
+
+**3. 坐牢按钮 emoji**
+- `client/src/App.jsx` - "坐牢中..."按钮添加 `🚔` 警车 emoji
+
+---
+
+### v0.0.7 (上一版本)
 **主题：UI 界面重构 - 三栏布局 + 玩家信息卡片**
 
 #### 本次会话完成的改动
@@ -264,6 +288,9 @@
 - **移动端适配**：响应式布局适配小屏幕设备
   - 当前布局设置 `min-width: 1200px`，小屏幕需横向滚动
   - 计划：大屏三栏，中屏双栏，小屏单栏垂直堆叠
+- **蒸馏桃子盒子对话弹窗**：点击 NPC 弹出对话窗口
+  - 当前仅显示随机气泡
+  - 后续迭代：点击 NPC 打开对话面板，显示更多互动内容
 - **跨服通讯贝**：实时聊天/留言板功能
   - 当前占位："以太乱流，暂时无法连接"
   - 需后端 WebSocket 支持

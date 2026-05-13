@@ -214,7 +214,7 @@ function App() {
                   : 'bg-[#8fbc8f] hover:bg-[#7faa7f] cursor-pointer'
               }`}
             >
-              <span className="text-xl">{player.currentSeat ? '' : '🛏️'}</span>
+              <span className="text-xl">{player.currentSeat ? '🚔' : '🛏️'}</span>
               <span>{player.currentSeat ? '坐牢中...' : '入座休息'}</span>
             </button>
             
@@ -231,7 +231,7 @@ function App() {
               className="flex-1 max-w-[200px] py-3 bg-[#7b9ec4] hover:bg-[#6b8eb4] rounded-xl font-semibold transition-all shadow-sm flex items-center justify-center gap-2 text-white"
             >
               <span className="text-xl">📋</span>
-              <span>每日任务</span>
+              <span>上班打卡</span>
             </button>
           </div>
         </div>

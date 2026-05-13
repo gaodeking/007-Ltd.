@@ -32,7 +32,7 @@ function TaskPanel({ playerId, tasks, setTasks, onClose }) {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl border border-[#d4c8c8] max-w-md w-full shadow-lg">
         <div className="p-4 border-b border-[#d4c8c8] flex justify-between items-center">
-          <h2 className="text-xl font-bold text-[#4a3a3a]"> 每日任务</h2>
+          <h2 className="text-xl font-bold text-[#4a3a3a]"> 上班打卡</h2>
           <button onClick={onClose} className="text-[#6b5b5b] hover:text-[#4a3a3a] text-2xl">&times;</button>
         </div>
         
