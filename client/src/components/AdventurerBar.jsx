@@ -3,12 +3,11 @@ function AdventurerBar({ player, onOpenProfile }) {
     <div className="bg-gradient-to-r from-[#faf5f5] to-[#f5f0f0] border-b border-[#d4c8c8] px-4 py-3">
       <div className="max-w-4xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="text-2xl">{player.avatar || '‍♂️'}</span>
+          <span className="text-2xl">{player.avatar || '🧙‍♂️'}</span>
           <div>
             <span className="text-lg font-semibold">{player.name || '无名冒险者'}</span>
             <span className="text-sm text-[#8a7a7a] ml-2">部队: 加班007</span>
           </div>
-        </div>
         </div>
         <button
           onClick={onOpenProfile}
