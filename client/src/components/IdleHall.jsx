@@ -109,8 +109,6 @@ function IdleHall({ playerId, player, seats, setSeats, setPlayer }) {
         </div>
       </div>
     </div>
-      </div>
-    </div>
   );
 }
 
