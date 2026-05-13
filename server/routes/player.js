@@ -12,11 +12,11 @@ router.get('/init', async (req, res) => {
       await db.run('INSERT INTO players (id) VALUES ($1)', [playerId]);
     }
 
-    let player = await db.get('SELECT "id", "name", "avatar", "money", "ticket", "hair", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [playerId]);
+    let player = await db.get('SELECT "id", "name", "avatar", "money", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [playerId]);
 
     if (!player) {
       await db.run('INSERT INTO players (id) VALUES ($1)', [playerId]);
-      player = await db.get('SELECT "id", "name", "avatar", "money", "ticket", "hair", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [playerId]);
+      player = await db.get('SELECT "id", "name", "avatar", "money", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [playerId]);
     }
 
     res.json({ playerId, player });
@@ -28,7 +28,7 @@ router.get('/init', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const player = await db.get('SELECT "id", "name", "avatar", "money", "ticket", "hair", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [req.params.id]);
+    const player = await db.get('SELECT "id", "name", "avatar", "money", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [req.params.id]);
     if (!player) return res.status(404).json({ error: 'Player not found' });
     res.json(player);
   } catch (err) {
@@ -75,7 +75,7 @@ router.post('/:id/save', async (req, res) => {
       backendEarnings = Math.floor(elapsed * player.idleRate * player.bonus);
     }
     
-    const { money, ticket, hair, idleRate, bonus, currentSeat, seatCooldown, totalIdleTime, totalMoneyEarned, totalGachaCount } = req.body;
+    const { money, idleRate, bonus, currentSeat, seatCooldown, totalIdleTime, totalMoneyEarned, totalGachaCount } = req.body;
     
     const finalMoney = Math.max(money, player.money + backendEarnings);
     const finalTotalMoneyEarned = Math.max(totalMoneyEarned, player.totalMoneyEarned + backendEarnings);
@@ -83,11 +83,11 @@ router.post('/:id/save', async (req, res) => {
     
     await db.run(`
       UPDATE players SET
-        "money" = $1, "ticket" = $2, "hair" = $3, "idleRate" = $4, "bonus" = $5,
-        "currentSeat" = $6, "seatCooldown" = $7, "totalIdleTime" = $8,
-        "totalMoneyEarned" = $9, "totalGachaCount" = $10, "lastSave" = EXTRACT(EPOCH FROM NOW())::INTEGER
-      WHERE id = $11
-    `, [finalMoney, ticket, hair, idleRate, bonus, currentSeat, seatCooldown, finalTotalIdleTime, finalTotalMoneyEarned, totalGachaCount, req.params.id]);
+        "money" = $1, "idleRate" = $2, "bonus" = $3,
+        "currentSeat" = $4, "seatCooldown" = $5, "totalIdleTime" = $6,
+        "totalMoneyEarned" = $7, "totalGachaCount" = $8, "lastSave" = EXTRACT(EPOCH FROM NOW())::INTEGER
+      WHERE id = $9
+    `, [finalMoney, idleRate, bonus, currentSeat, seatCooldown, finalTotalIdleTime, finalTotalMoneyEarned, totalGachaCount, req.params.id]);
     
     res.json({ success: true, backendEarnings });
   } catch (err) {
@@ -98,7 +98,7 @@ router.post('/:id/save', async (req, res) => {
 
 router.get('/:id/offline-earnings', async (req, res) => {
   try {
-    const player = await db.get('SELECT "id", "name", "avatar", "money", "ticket", "hair", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [req.params.id]);
+    const player = await db.get('SELECT "id", "name", "avatar", "money", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [req.params.id]);
     if (!player) return res.status(404).json({ error: 'Player not found' });
 
     const now = Math.floor(Date.now() / 1000);
@@ -120,7 +120,7 @@ router.get('/:id/offline-earnings', async (req, res) => {
 
 router.post('/:id/claim-offline', async (req, res) => {
   try {
-    const player = await db.get('SELECT "id", "name", "avatar", "money", "ticket", "hair", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [req.params.id]);
+    const player = await db.get('SELECT "id", "name", "avatar", "money", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [req.params.id]);
     if (!player) return res.status(404).json({ error: 'Player not found' });
 
     const now = Math.floor(Date.now() / 1000);
