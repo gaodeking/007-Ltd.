@@ -72,12 +72,6 @@ router.post('/claim', async (req, res) => {
     if (reward.money) {
       await db.run('UPDATE players SET "money" = "money" + $1 WHERE id = $2', [reward.money, playerId]);
     }
-    if (reward.ticket) {
-      await db.run('UPDATE players SET "ticket" = "ticket" + $1 WHERE id = $2', [reward.ticket, playerId]);
-    }
-    if (reward.hair) {
-      await db.run('UPDATE players SET "hair" = "hair" + $1 WHERE id = $2', [reward.hair, playerId]);
-    }
 
     await db.run('UPDATE player_tasks SET "claimed" = 1 WHERE "id" = $1', [playerTask.id]);
 

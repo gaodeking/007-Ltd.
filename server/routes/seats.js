@@ -45,7 +45,7 @@ router.post('/:seatId/sit', async (req, res) => {
       return res.status(400).json({ error: 'Invalid seat number' });
     }
 
-    const player = await db.get('SELECT "id", "name", "money", "ticket", "hair", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [playerId]);
+    const player = await db.get('SELECT "id", "name", "money", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [playerId]);
     if (!player) return res.status(404).json({ error: 'Player not found' });
 
     const now = Math.floor(Date.now() / 1000);
@@ -79,7 +79,7 @@ router.post('/leave', async (req, res) => {
   try {
     const { playerId } = req.body;
 
-    const player = await db.get('SELECT "id", "name", "money", "ticket", "hair", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [playerId]);
+    const player = await db.get('SELECT "id", "name", "money", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [playerId]);
     if (!player) return res.status(404).json({ error: 'Player not found' });
 
     if (!player.currentSeat) {
