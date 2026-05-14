@@ -8,17 +8,42 @@
 #### 本次会话完成的改动
 
 **1. 新手引导与每日登录系统**
-- 新建 `client/src/components/OnboardingModal.jsx`
-- 集成新手引导和每日登录弹窗逻辑
-- 公告面板自动拉取最新公告
+- 新建 `client/src/components/OnboardingModal.jsx` - 首次进入游戏引导流程
+- 修改 `client/src/App.jsx` - 集成新手引导和每日登录弹窗逻辑
+- 修改 `server/routes/player.js` - `/init` 接口返回登录状态和公告数据
+- 数据库新增字段：`has_seen_onboarding` (BOOLEAN), `last_login_date` (TEXT)
 
-**2. 金币系统安全加固**
-- 修复金币系统安全漏洞（时间旅行刷金币）
-- 强制服务端权威计算金币产出
+**2. 版本检测与自动刷新机制**
+- 新建 `server/routes/version.js` - 版本检查接口，返回构建时间戳
+- 新建 `client/src/components/VersionChecker.jsx` - 版本检测组件
+  - 每 30 秒轮询后端检查版本变化
+  - 检测到更新时显示提示条，60 秒倒计时后自动刷新
+  - 刷新前自动保存玩家数据，防止金币丢失
+- 修改 `client/vite.config.js` - 构建时生成 `version.json`
+- 修改 `server/server.js` - 注册 `/api/version` 路由
 
-**3. 稳定性修复**
-- 修复日期解析异常导致的崩溃
-- 优化座位超时机制，减少误断开
+**3. 幽灵座位问题修复**
+- 修改 `client/src/App.jsx` - 合并两个 `beforeunload` 监听器为一个
+  - 使用 `Blob` 格式发送 `sendBeacon` 数据，确保请求体正确
+  - 离开座位时添加 `force: true` 参数，强制释放座位
+- 修改 `server/routes/seats.js` - `/seats/leave` 接口支持 `force` 参数
+  - 跳过 `seatCooldown` 检查，确保页面关闭时座位必定被释放
+- 修改 `server/routes/player.js` - `/init` 接口优化
+  - 先检查旧 `lastHeartbeat` 释放超时座位，再更新新心跳
+  - 防止多标签页同时打开时的误判
+
+**4. 金币同步与定时器优化**
+- 修改 `client/src/App.jsx` - 优化 `loadSeats` 逻辑
+  - 使用 `currentSeatRef` 比较旧值，只在 `currentSeat` 真正改变时才调用 `setPlayer`
+  - 避免不必要的 re-render 导致定时器重置
+- 修改 `client/src/App.jsx` - 金币定时器使用 Refs 存储关键值
+  - 依赖项仅包含 `player?.currentSeat`，避免 `idleRate`/`bonus` 变化导致频繁重建
+  - 解决 `MONEY MISMATCH` 警告（前端增量与后端预期不一致）
+
+**5. 稳定性修复**
+- 修复 `/init` 接口图片路径错误导致的崩溃
+- 修复 `last_login_date` 解析异常（增强日期格式容错）
+- 座位超时延长至 120 秒，心跳间隔调整为 30 秒
 
 ---
 
