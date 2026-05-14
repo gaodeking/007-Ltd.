@@ -262,7 +262,7 @@ function App() {
                 onOpenProfile={() => setShowProfile(true)}
                 playerId={playerId}
               />
-              <AnnouncementPanel />
+              <AnnouncementPanel playerId={playerId} />
               <ArcadePanel />
             </div>
             

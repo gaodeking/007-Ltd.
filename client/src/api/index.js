@@ -42,4 +42,8 @@ export const taskApi = {
   claim: (playerId, taskId) => api.post('/tasks/claim', { playerId, taskId }),
 };
 
+export const bugApi = {
+  report: (playerId, description) => api.post('/bugs', { playerId, description }),
+};
+
 export default api;

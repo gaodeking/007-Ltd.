@@ -19,11 +19,13 @@ async function start() {
   const seatRoutes = require('./routes/seats');
   const gachaRoutes = require('./routes/gacha');
   const taskRoutes = require('./routes/tasks');
+  const bugRoutes = require('./routes/bugs');
 
   app.use('/api/player', playerRoutes);
   app.use('/api/seats', seatRoutes);
   app.use('/api/gacha', gachaRoutes);
   app.use('/api/tasks', taskRoutes);
+  app.use('/api/bugs', bugRoutes);
 
   // Health check
   app.get('/api/health', (req, res) => {
