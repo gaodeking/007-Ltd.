@@ -50,6 +50,12 @@
   - `UPDATE players SET "idleRate" = 1, "bonus" = 1.0 WHERE "id" = '...';`
 - **教训**：代码默认值修复了崩溃，但数据清洗需确保覆盖所有活跃玩家
 
+**6. 修复抽奖结果动画反复播放 (v0.0.9E)**
+- **问题**：抽奖结果弹窗的卡牌翻转动画会因金币增长导致父组件重渲染而反复播放。
+- **原因**：`Card` 组件定义在 `GachaResultModal` 函数内部，导致每次父组件更新时子组件被销毁并重新挂载。
+- **解决**：将 `Card` 组件及 `getRarityStyle` 函数提取到 `GachaResultModal` 外部（模块作用域），防止不必要的重新挂载。
+- **文件**：`client/src/components/GachaResultModal.jsx`
+
 ---
 
 ### v0.0.8 (上一版本)
