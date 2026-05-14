@@ -79,9 +79,12 @@ router.post('/:id/save', async (req, res) => {
       backendEarnings = Math.floor(elapsed * safeIdleRate * safeBonus);
     }
     
-    const finalMoney = Math.max(money, player.money + backendEarnings);
-    const finalTotalMoneyEarned = Math.max(totalMoneyEarned, player.totalMoneyEarned + backendEarnings);
-    const finalTotalIdleTime = (totalIdleTime || 0) + elapsed;
+    // 调试日志：打印前端传来的原始数据，便于排查 NaN 来源
+    console.log('[/save] req.body:', JSON.stringify(req.body));
+    
+    const finalMoney = Math.max(money ?? 0, (player.money ?? 0) + backendEarnings);
+    const finalTotalMoneyEarned = Math.max(totalMoneyEarned ?? 0, (player.totalMoneyEarned ?? 0) + backendEarnings);
+    const finalTotalIdleTime = (totalIdleTime ?? 0) + elapsed;
     
     await db.run(`
       UPDATE players SET
@@ -89,7 +92,7 @@ router.post('/:id/save', async (req, res) => {
         "currentSeat" = $4, "seatCooldown" = $5, "totalIdleTime" = $6,
         "totalMoneyEarned" = $7, "totalGachaCount" = $8, "lastSave" = EXTRACT(EPOCH FROM NOW())::INTEGER
       WHERE id = $9
-    `, [finalMoney, safeIdleRate, safeBonus, currentSeat, seatCooldown, finalTotalIdleTime, finalTotalMoneyEarned, totalGachaCount, req.params.id]);
+    `, [finalMoney, safeIdleRate, safeBonus, currentSeat ?? null, seatCooldown ?? 0, finalTotalIdleTime, finalTotalMoneyEarned, totalGachaCount ?? 0, req.params.id]);
     
     res.json({ success: true, backendEarnings });
   } catch (err) {
