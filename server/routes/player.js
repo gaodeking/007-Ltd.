@@ -26,11 +26,15 @@ router.get('/init', async (req, res) => {
     
     let lastLoginDate = null;
     if (player.last_login_date) {
-      // 兼容 pg 驱动返回 Date 对象或字符串的情况
-      if (player.last_login_date instanceof Date) {
-        lastLoginDate = player.last_login_date.toLocaleDateString('sv-SE');
-      } else {
-        lastLoginDate = String(player.last_login_date).split('T')[0];
+      try {
+        // 通用解析：兼容 Date 对象、字符串或其他格式
+        const dateObj = new Date(player.last_login_date);
+        if (!isNaN(dateObj.getTime())) {
+          // 格式化为 YYYY-MM-DD (使用服务器本地时间)
+          lastLoginDate = dateObj.toLocaleDateString('sv-SE');
+        }
+      } catch (e) {
+        console.error('Date parsing failed for last_login_date:', e);
       }
     }
 
