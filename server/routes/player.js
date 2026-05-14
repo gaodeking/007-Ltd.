@@ -19,18 +19,29 @@ router.get('/init', async (req, res) => {
       player = await db.get('SELECT * FROM players WHERE id = $1', [playerId]);
     }
 
+    // 检查并释放超时的旧座位
+    const now = Math.floor(Date.now() / 1000);
+    if (player.currentSeat && player.lastHeartbeat) {
+      const elapsed = now - player.lastHeartbeat;
+      if (elapsed > 120) {
+        // 心跳超时，释放旧座位
+        await db.run('UPDATE seats SET "playerId" = NULL WHERE "seatId" = $1', [player.currentSeat]);
+        await db.run('UPDATE players SET "currentSeat" = NULL WHERE id = $1', [playerId]);
+        player.currentSeat = null;
+      }
+    }
+
+    // 更新 lastHeartbeat，防止其他请求误判
+    await db.run('UPDATE players SET "lastHeartbeat" = $1 WHERE id = $2', [now, playerId]);
+
     // 登录逻辑判断
-    const now = new Date();
-    // 使用服务器本地时间 YYYY-MM-DD，避免 UTC 时区导致每日登录判定不准
-    const todayStr = now.toLocaleDateString('sv-SE'); 
+    const todayStr = new Date().toLocaleDateString('sv-SE'); 
     
     let lastLoginDate = null;
     if (player.last_login_date) {
       try {
-        // 通用解析：兼容 Date 对象、字符串或其他格式
         const dateObj = new Date(player.last_login_date);
         if (!isNaN(dateObj.getTime())) {
-          // 格式化为 YYYY-MM-DD (使用服务器本地时间)
           lastLoginDate = dateObj.toLocaleDateString('sv-SE');
         }
       } catch (e) {
@@ -41,20 +52,15 @@ router.get('/init', async (req, res) => {
     let showOnboarding = false;
     let showDailyLogin = false;
 
-    // 1. 新手引导判断
     if (!player.has_seen_onboarding) {
       showOnboarding = true;
-      // 立即标记为已读，防止刷新重复触发
       await db.run('UPDATE players SET "has_seen_onboarding" = true WHERE id = $1', [playerId]);
     } 
-    // 2. 每日登录判断 (仅在非首次登录时检查)
     else if (lastLoginDate !== todayStr) {
       showDailyLogin = true;
-      // 更新最后登录日期
       await db.run('UPDATE players SET "last_login_date" = $1 WHERE id = $2', [todayStr, playerId]);
     }
 
-    // 构造返回的玩家数据，移除敏感字段
     const safePlayer = {
       id: player.id,
       name: player.name,
@@ -69,7 +75,6 @@ router.get('/init', async (req, res) => {
       totalGachaCount: player.totalGachaCount,
       lastSave: player.lastSave,
       createdAt: player.createdAt,
-      // 新增状态字段
       showOnboarding,
       showDailyLogin
     };

@@ -31,6 +31,9 @@ function App() {
   const [announcement, setAnnouncement] = useState(null);
   const playerRef = useRef(player);
   playerRef.current = player;
+  const currentSeatRef = useRef(null);
+  const idleRateRef = useRef(1);
+  const bonusRef = useRef(1.0);
 
   // Initialize player
   useEffect(() => {
@@ -93,10 +96,12 @@ function App() {
         setSeats(res.data);
         // 同步 currentSeat：从座位数据中找到当前玩家的座位
         const mySeat = res.data.find(s => s.playerId === playerId);
-        if (mySeat && mySeat.seatId !== playerRef.current?.currentSeat) {
-          setPlayer(prev => ({ ...prev, currentSeat: mySeat.seatId }));
-        } else if (!mySeat && playerRef.current?.currentSeat) {
-          setPlayer(prev => ({ ...prev, currentSeat: null }));
+        const newSeatId = mySeat ? mySeat.seatId : null;
+        
+        // 只在 currentSeat 真正改变时才更新，避免不必要的 re-render
+        if (newSeatId !== currentSeatRef.current) {
+          currentSeatRef.current = newSeatId;
+          setPlayer(prev => ({ ...prev, currentSeat: newSeatId }));
         }
       } catch (err) {
         console.error('Failed to load seats:', err);
@@ -184,11 +189,21 @@ function App() {
     return () => clearInterval(heartbeatInterval);
   }, [playerId, player?.currentSeat]);
 
-  // 金币增长定时器（每 5 秒）
+  // 同步 Refs 到最新值
   useEffect(() => {
-    if (!player || !player.currentSeat) return;
+    currentSeatRef.current = player?.currentSeat;
+    idleRateRef.current = player?.idleRate;
+    bonusRef.current = player?.bonus;
+  }, [player?.currentSeat, player?.idleRate, player?.bonus]);
+
+  // 金币增长定时器（每 5 秒）
+  // 使用 Refs 避免 loadSeats 导致的频繁重置
+  useEffect(() => {
+    if (!player || !currentSeatRef.current) return;
     const earnInterval = setInterval(() => {
-      const earningsPerTick = Math.floor((player.idleRate || 1) * (player.bonus || 1.0) * 5);
+      const earningsPerTick = Math.floor(
+        (idleRateRef.current || 1) * (bonusRef.current || 1.0) * 5
+      );
       setPlayer(prev => ({
         ...prev,
         money: prev.money + earningsPerTick,
@@ -198,7 +213,7 @@ function App() {
       setEarnTrigger(prev => prev + 1);
     }, 5000);
     return () => clearInterval(earnInterval);
-  }, [player?.currentSeat, player?.idleRate, player?.bonus]);
+  }, [player?.currentSeat]);
 
   if (loading) {
     return (
