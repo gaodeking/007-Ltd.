@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import peachNpc from '../assets/peach-box-npc.png';
 
 // 对话内容配置
 const onboardingDialogues = [
@@ -64,13 +65,9 @@ function OnboardingModal({ type, player, onClose }) {
           {/* NPC 图片 */}
           <div className="relative">
             <img 
-              src="/peach-box-npc.png" 
+              src={peachNpc} 
               alt="Distilled Peach Box" 
               className="w-40 h-auto drop-shadow-lg"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = "https://placehold.co/160x160/f59e0b/ffffff?text=🍑";
-              }}
             />
             {/* 气泡尾巴 */}
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-b-[10px] border-b-[#fef3c7]"></div>

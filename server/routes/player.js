@@ -21,8 +21,18 @@ router.get('/init', async (req, res) => {
 
     // 登录逻辑判断
     const now = new Date();
-    const todayStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
-    const lastLoginDate = player.last_login_date ? player.last_login_date.split('T')[0] : null;
+    // 使用服务器本地时间 YYYY-MM-DD，避免 UTC 时区导致每日登录判定不准
+    const todayStr = now.toLocaleDateString('sv-SE'); 
+    
+    let lastLoginDate = null;
+    if (player.last_login_date) {
+      // 兼容 pg 驱动返回 Date 对象或字符串的情况
+      if (player.last_login_date instanceof Date) {
+        lastLoginDate = player.last_login_date.toLocaleDateString('sv-SE');
+      } else {
+        lastLoginDate = String(player.last_login_date).split('T')[0];
+      }
+    }
 
     let showOnboarding = false;
     let showDailyLogin = false;
