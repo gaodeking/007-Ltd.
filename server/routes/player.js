@@ -81,6 +81,10 @@ router.post('/:id/save', async (req, res) => {
     
     const { money, idleRate, bonus, currentSeat, seatCooldown, totalIdleTime, totalMoneyEarned, totalGachaCount } = req.body;
     
+    // 防御性编程：防止前端传来 null/undefined 导致数据库 NaN 错误
+    const safeIdleRate = idleRate || player.idleRate || 1;
+    const safeBonus = bonus || player.bonus || 1.0;
+    
     const finalMoney = Math.max(money, player.money + backendEarnings);
     const finalTotalMoneyEarned = Math.max(totalMoneyEarned, player.totalMoneyEarned + backendEarnings);
     const finalTotalIdleTime = (totalIdleTime || 0) + elapsed;
@@ -91,7 +95,7 @@ router.post('/:id/save', async (req, res) => {
         "currentSeat" = $4, "seatCooldown" = $5, "totalIdleTime" = $6,
         "totalMoneyEarned" = $7, "totalGachaCount" = $8, "lastSave" = EXTRACT(EPOCH FROM NOW())::INTEGER
       WHERE id = $9
-    `, [finalMoney, idleRate, bonus, currentSeat, seatCooldown, finalTotalIdleTime, finalTotalMoneyEarned, totalGachaCount, req.params.id]);
+    `, [finalMoney, safeIdleRate, safeBonus, currentSeat, seatCooldown, finalTotalIdleTime, finalTotalMoneyEarned, totalGachaCount, req.params.id]);
     
     res.json({ success: true, backendEarnings });
   } catch (err) {
