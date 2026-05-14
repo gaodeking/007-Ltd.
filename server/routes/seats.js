@@ -86,7 +86,7 @@ router.post('/:seatId/sit', async (req, res) => {
 
 router.post('/leave', async (req, res) => {
   try {
-    const { playerId } = req.body;
+    const { playerId, force } = req.body;
 
     const player = await db.get('SELECT "id", "name", "money", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [playerId]);
     if (!player) return res.status(404).json({ error: 'Player not found' });
@@ -96,7 +96,9 @@ router.post('/leave', async (req, res) => {
     }
 
     const now = Math.floor(Date.now() / 1000);
-    if (player.seatCooldown > now) {
+    
+    // force=true 时跳过 cooldown 检查（用于页面关闭时的强制释放）
+    if (!force && player.seatCooldown > now) {
       const remaining = player.seatCooldown - now;
       return res.status(400).json({ error: `别急，屁股还没坐热呢`, cooldown: remaining });
     }
