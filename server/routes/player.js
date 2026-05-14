@@ -70,21 +70,23 @@ router.post('/:id/save', async (req, res) => {
     
     const { money, idleRate, bonus, currentSeat, seatCooldown, totalIdleTime, totalMoneyEarned, totalGachaCount } = req.body;
     
-    // 防御性编程：优先使用前端值，其次数据库值，最后默认值，防止 NaN 错误
-    const safeIdleRate = idleRate ?? player.idleRate ?? 1;
-    const safeBonus = bonus ?? player.bonus ?? 1.0;
+    // 严格防御性编程：拦截 NaN、null、undefined 及非法类型，确保数据库写入安全
+    // 1. idleRate 和 bonus：使用 Number.isNaN 检查，保留合法的 0 值
+    const safeIdleRate = Number.isNaN(Number(idleRate)) ? 1 : Number(idleRate);
+    const safeBonus = Number.isNaN(Number(bonus)) ? 1.0 : Number(bonus);
     
     let backendEarnings = 0;
     if (player.currentSeat && elapsed > 0) {
       backendEarnings = Math.floor(elapsed * safeIdleRate * safeBonus);
     }
     
-    // 调试日志：打印前端传来的原始数据，便于排查 NaN 来源
-    console.log('[/save] req.body:', JSON.stringify(req.body));
+    // 2. 金币与统计字段：使用 Number(val) || 0，NaN 和 null 均回退到 0
+    const finalMoney = Math.max(Number(money) || 0, (Number(player.money) || 0) + backendEarnings);
+    const finalTotalMoneyEarned = Math.max(Number(totalMoneyEarned) || 0, (Number(player.totalMoneyEarned) || 0) + backendEarnings);
+    const finalTotalIdleTime = (Number(totalIdleTime) || 0) + elapsed;
     
-    const finalMoney = Math.max(money ?? 0, (player.money ?? 0) + backendEarnings);
-    const finalTotalMoneyEarned = Math.max(totalMoneyEarned ?? 0, (player.totalMoneyEarned ?? 0) + backendEarnings);
-    const finalTotalIdleTime = (totalIdleTime ?? 0) + elapsed;
+    // 3. currentSeat：显式检查 NaN，防止字符串 ID 被误转，同时拦截 NaN
+    const safeCurrentSeat = Number.isNaN(Number(currentSeat)) ? null : currentSeat;
     
     await db.run(`
       UPDATE players SET
@@ -92,7 +94,7 @@ router.post('/:id/save', async (req, res) => {
         "currentSeat" = $4, "seatCooldown" = $5, "totalIdleTime" = $6,
         "totalMoneyEarned" = $7, "totalGachaCount" = $8, "lastSave" = EXTRACT(EPOCH FROM NOW())::INTEGER
       WHERE id = $9
-    `, [finalMoney, safeIdleRate, safeBonus, currentSeat ?? null, seatCooldown ?? 0, finalTotalIdleTime, finalTotalMoneyEarned, totalGachaCount ?? 0, req.params.id]);
+    `, [finalMoney, safeIdleRate, safeBonus, safeCurrentSeat, Number(seatCooldown) || 0, finalTotalIdleTime, finalTotalMoneyEarned, Number(totalGachaCount) || 0, req.params.id]);
     
     res.json({ success: true, backendEarnings });
   } catch (err) {
