@@ -2,7 +2,42 @@
 
 ## 版本历史
 
-### v0.0.9 (当前版本)
+### v0.1.0 (当前版本)
+**主题：公告系统 + Bug 上报 + 生产环境 NaN 修复**
+
+#### 本次会话完成的改动
+
+**1. 动态公告系统**
+- **数据库**：新建 `announcements` 表（字段：`id`, `content`, `version`, `active`, `created_at`）。
+- **后端**：新建 `server/routes/announcements.js`，实现 `GET /api/announcements` 接口，返回最新一条活跃公告。
+- **前端**：重构 `client/src/components/AnnouncementPanel.jsx`
+  - 移除硬编码，改为 `useEffect` 调用 API 获取数据。
+  - 添加加载状态（"加载中..."）、错误处理（"加载失败"）和空状态（"暂无公告"）。
+  - UI 显示：版本标签（如 `v0.1.0`）、公告内容、本地化时间戳。
+- **预置数据**：在测试库和生产库执行 SQL 插入初始公告。
+
+**2. Bug 上报与反馈系统**
+- **数据库**：新建 `bug_reports` 表（字段：`id`, `player_id`, `description`, `status`, `created_at`）。
+- **后端**：新建 `server/routes/bugs.js`，实现 `POST /api/bugs` 接口。
+  - **查重逻辑**：检查玩家是否提交过完全相同的描述，防止重复刷单。
+  - **长度校验**：拒绝少于 5 个字符的描述。
+- **前端**：新建 `client/src/components/BugReportModal.jsx`
+  - 包含多行文本输入框和提交按钮。
+  - 提交成功后显示"感谢反馈"提示。
+- **入口集成**：在 `AnnouncementPanel` 右上角添加 `🐛 上报 Bug` 按钮。
+
+**3. 生产环境 NaN 崩溃修复 (v0.1.0A)**
+- **问题**：生产环境 `/save` 接口持续报错 `invalid input syntax for type integer: "NaN"`。
+- **根因**：之前的 `??` 运算符无法拦截 `NaN`，且 `currentSeat` 等字段缺乏严格类型检查。
+- **解决**：升级 `server/routes/player.js` 的防御性逻辑。
+  - 使用 `Number.isNaN(Number(val))` 显式拦截 `NaN`。
+  - 对 `idleRate` 和 `bonus` 保留合法的 `0` 值，仅拦截非法 `NaN`。
+  - 对 `money` 等统计字段使用 `Number(val) || 0` 进行安全回退。
+  - **数据自愈**：代码修复后，玩家下次保存时会自动将数据库中的脏数据覆盖为安全默认值。
+
+---
+
+### v0.0.9 (上一版本)
 **主题：抽卡系统重构 + 经济数值重置 + 3D 翻转动画**
 
 #### 本次会话完成的改动
@@ -352,10 +387,6 @@
 - **金蝶游乐场**：小游戏投放区域
   - 当前占位："投资招商中..."
   - 需设计游戏机制和交互逻辑
-- **公告系统**：发布更新公告和随机新闻
-  - 当前占位："这是一个公告"
-  - 阶段 1：前端硬编码公告内容
-  - 阶段 2：后端 API + 数据库动态管理
 - **离线收益**：玩家关闭页面后重新登录时，计算并提示领取离线期间收益
   - 后端接口已存在：`GET /player/:id/offline-earnings` 和 `POST /player/:id/claim-offline`
   - 前端需添加：登录时弹窗提示 + 领取按钮

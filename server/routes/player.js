@@ -12,14 +12,55 @@ router.get('/init', async (req, res) => {
       await db.run('INSERT INTO players (id) VALUES ($1)', [playerId]);
     }
 
-    let player = await db.get('SELECT "id", "name", "avatar", "money", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [playerId]);
+    let player = await db.get('SELECT * FROM players WHERE id = $1', [playerId]);
 
     if (!player) {
       await db.run('INSERT INTO players (id) VALUES ($1)', [playerId]);
-      player = await db.get('SELECT "id", "name", "avatar", "money", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [playerId]);
+      player = await db.get('SELECT * FROM players WHERE id = $1', [playerId]);
     }
 
-    res.json({ playerId, player });
+    // 登录逻辑判断
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
+    const lastLoginDate = player.last_login_date ? player.last_login_date.split('T')[0] : null;
+
+    let showOnboarding = false;
+    let showDailyLogin = false;
+
+    // 1. 新手引导判断
+    if (!player.has_seen_onboarding) {
+      showOnboarding = true;
+      // 立即标记为已读，防止刷新重复触发
+      await db.run('UPDATE players SET "has_seen_onboarding" = true WHERE id = $1', [playerId]);
+    } 
+    // 2. 每日登录判断 (仅在非首次登录时检查)
+    else if (lastLoginDate !== todayStr) {
+      showDailyLogin = true;
+      // 更新最后登录日期
+      await db.run('UPDATE players SET "last_login_date" = $1 WHERE id = $2', [todayStr, playerId]);
+    }
+
+    // 构造返回的玩家数据，移除敏感字段
+    const safePlayer = {
+      id: player.id,
+      name: player.name,
+      avatar: player.avatar,
+      money: player.money,
+      idleRate: player.idleRate,
+      bonus: player.bonus,
+      currentSeat: player.currentSeat,
+      seatCooldown: player.seatCooldown,
+      totalIdleTime: player.totalIdleTime,
+      totalMoneyEarned: player.totalMoneyEarned,
+      totalGachaCount: player.totalGachaCount,
+      lastSave: player.lastSave,
+      createdAt: player.createdAt,
+      // 新增状态字段
+      showOnboarding,
+      showDailyLogin
+    };
+
+    res.json({ playerId, player: safePlayer });
   } catch (err) {
     console.error('Error in /init:', err);
     res.status(500).json({ error: 'Internal server error' });

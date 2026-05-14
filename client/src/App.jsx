@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect, useRef } from 'react';
-import { playerApi, seatApi, gachaApi, taskApi } from './api';
+import { playerApi, seatApi, gachaApi, taskApi, announcementApi } from './api';
 import ErrorBoundary from './components/ErrorBoundary';
 import CurrencyBar from './components/CurrencyBar';
 import IdleHall from './components/IdleHall';
@@ -12,6 +12,7 @@ import ChatSidebar from './components/ChatSidebar';
 import PlayerInfoCard from './components/PlayerInfoCard';
 import AnnouncementPanel from './components/AnnouncementPanel';
 import ArcadePanel from './components/ArcadePanel';
+import OnboardingModal from './components/OnboardingModal';
 
 function App() {
   const [playerId, setPlayerId] = useState(null);
@@ -25,6 +26,9 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [earnings, setEarnings] = useState(0);
   const [earnTrigger, setEarnTrigger] = useState(0);
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
+  const [showDailyLoginModal, setShowDailyLoginModal] = useState(false);
+  const [announcement, setAnnouncement] = useState(null);
   const playerRef = useRef(player);
   playerRef.current = player;
 
@@ -36,6 +40,7 @@ function App() {
         setError(null);
         const res = await playerApi.init();
         setPlayerId(res.data.playerId);
+        
         // Ensure player has all required fields with defaults
         const playerData = res.data.player || {};
         setPlayer({
@@ -51,8 +56,24 @@ function App() {
           totalGachaCount: playerData.totalGachaCount || 0,
           lastSave: playerData.lastSave || Math.floor(Date.now() / 1000),
         });
-        console.log('🔍 [DEBUG] Player Data from Server:', res.data.player);
+        
+        console.log(' [DEBUG] Player Data from Server:', res.data.player);
         localStorage.setItem('playerId', res.data.playerId);
+
+        // 处理弹窗逻辑
+        if (playerData.showOnboarding) {
+          setShowOnboardingModal(true);
+        } else if (playerData.showDailyLogin) {
+          // 每日登录需要获取公告
+          try {
+            const annRes = await announcementApi.getLatest();
+            setAnnouncement(annRes.data);
+          } catch (err) {
+            console.error('Failed to load announcement for daily login:', err);
+          }
+          setShowDailyLoginModal(true);
+        }
+
       } catch (err) {
         console.error('Failed to initialize player:', err);
         setError(err.message || '连接服务器失败，请刷新重试');
@@ -304,6 +325,29 @@ function App() {
             tasks={tasks}
             setTasks={setTasks}
             onClose={() => setShowTasks(false)}
+          />
+        )}
+
+        {/* 新手引导 / 每日登录弹窗 */}
+        {showOnboardingModal && (
+          <OnboardingModal 
+            type="onboarding"
+            player={player}
+            onClose={() => {
+              setShowOnboardingModal(false);
+              // 新手引导结束后，如果还有每日登录待显示，则显示
+              if (player?.showDailyLogin) {
+                setShowDailyLoginModal(true);
+              }
+            }}
+          />
+        )}
+
+        {showDailyLoginModal && (
+          <OnboardingModal 
+            type="daily"
+            player={{ ...player, announcement }}
+            onClose={() => setShowDailyLoginModal(false)}
           />
         )}
       </div>
