@@ -68,22 +68,16 @@ router.post('/:id/save', async (req, res) => {
     const now = Math.floor(Date.now() / 1000);
     const elapsed = now - (player.lastSave || now);
     
-    // ⚠️ 不确定：后端验证逻辑 - 取前端值和后端计算值的较大者
-    // 后续可能需要调整为强制使用后端计算值或其他策略
-    // 防御性编程：防止字段缺失导致 NaN 错误
-    const safeIdleRate = player.idleRate || 1;
-    const safeBonus = player.bonus || 1.0;
+    const { money, idleRate, bonus, currentSeat, seatCooldown, totalIdleTime, totalMoneyEarned, totalGachaCount } = req.body;
+    
+    // 防御性编程：优先使用前端值，其次数据库值，最后默认值，防止 NaN 错误
+    const safeIdleRate = idleRate ?? player.idleRate ?? 1;
+    const safeBonus = bonus ?? player.bonus ?? 1.0;
     
     let backendEarnings = 0;
     if (player.currentSeat && elapsed > 0) {
       backendEarnings = Math.floor(elapsed * safeIdleRate * safeBonus);
     }
-    
-    const { money, idleRate, bonus, currentSeat, seatCooldown, totalIdleTime, totalMoneyEarned, totalGachaCount } = req.body;
-    
-    // 防御性编程：防止前端传来 null/undefined 导致数据库 NaN 错误
-    const safeIdleRate = idleRate || player.idleRate || 1;
-    const safeBonus = bonus || player.bonus || 1.0;
     
     const finalMoney = Math.max(money, player.money + backendEarnings);
     const finalTotalMoneyEarned = Math.max(totalMoneyEarned, player.totalMoneyEarned + backendEarnings);
