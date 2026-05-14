@@ -353,3 +353,42 @@
 - **离线收益**：玩家关闭页面后重新登录时，计算并提示领取离线期间收益
   - 后端接口已存在：`GET /player/:id/offline-earnings` 和 `POST /player/:id/claim-offline`
   - 前端需添加：登录时弹窗提示 + 领取按钮
+
+---
+
+## 🌿 分支开发规范 (v0.1.0)
+
+### 1. 分支策略
+项目采用简化的 Gitflow 工作流，以保障生产环境稳定性：
+
+| 分支名称 | 用途 | 稳定性 | 部署目标 |
+| :--- | :--- | :--- | :--- |
+| **`main`** | **生产环境**：仅包含经过测试的稳定代码。 | ✅ 稳定 | Render 生产服务 (`zero07-ltd-2`) |
+| **`develop`** | **开发环境**：集成所有新功能，用于内部测试。 | ⚠️ 测试中 | Render 测试服务 (`jiaban007-staging`) |
+| **`feature/*`** | **功能开发**：针对具体功能（如 `feature/offline-earnings`）。 | 🚧 开发中 | 本地开发 |
+
+### 2. 开发工作流
+1.  **开发新功能**：
+    *   从 `develop` 创建功能分支：`git checkout -b feature/新功能 develop`。
+    *   在功能分支上编写代码，完成后合并回 `develop`。
+2.  **测试验证**：
+    *   访问 **Staging 网址** 进行测试。
+    *   确认功能正常且无 Bug。
+3.  **发布上线**：
+    *   将 `develop` 合并到 `main`：`git checkout main && git merge develop`。
+    *   推送到 GitHub：`git push origin main`。
+    *   Render 的 **生产服务** 会自动检测到 `main` 的更新并重新部署。
+
+### 3. 多电脑开发注意事项
+由于存在 **公司** 和 **家里** 两个开发环境，请严格遵守以下同步规范：
+
+*   **开始工作前**：无论在哪台电脑，第一件事永远是 `git pull origin develop`，确保拿到最新代码。
+*   **结束工作后**：`git push origin develop`，确保代码上传到云端。
+*   **本地环境变量**：
+    *   每台电脑的 `server/.env` 应独立配置，**切勿提交到 Git**。
+    *   本地开发建议连接 **测试数据库**，严禁在本地连接生产数据库，防止误操作导致数据丢失。
+
+### 4. 数据库管理
+*   **生产数据库**：Supabase Project `jiaban007` (ID: `cxahyurmtcsrifiqoyez`)
+*   **测试数据库**：Supabase Project `jiaban007-test` (ID: `chdwnashqoxybcbipthk`)
+*   **⚠️ 警告**：在进行数据库结构变更（如 `ALTER TABLE`）时，务必先在测试库执行，验证无误后，**必须**在生产库同步执行，否则会导致上线后代码报错。
