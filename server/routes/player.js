@@ -140,10 +140,28 @@ router.post('/:id/save', async (req, res) => {
       console.warn(`⚠️ [SUSPICIOUS] Player ${req.params.id} earned ${backendEarnings} gold in ${elapsed}s`);
     }
     
-    // 2. 金币与统计字段：后端作为唯一真理来源，防止客户端作弊
-    // 使用后端计算的增量累加到数据库现有值上
-    const finalMoney = (Number(player.money) || 0) + backendEarnings;
-    const finalTotalMoneyEarned = (Number(player.totalMoneyEarned) || 0) + backendEarnings;
+    // 前端 money 校验：防止浏览器节流、网络延迟等导致的前端累加偏差
+    const frontendMoney = Number(money) || 0;
+    const dbMoney = Number(player.money) || 0;
+    const frontendMoneyDiff = frontendMoney - dbMoney;
+    const expectedDiff = backendEarnings;
+    // 容差阈值：50% 误差 或 50 金币，取较大值
+    const tolerance = Math.max(expectedDiff * 0.5, 50);
+    
+    let finalMoney;
+    let finalTotalMoneyEarned;
+    
+    if (player.currentSeat && Math.abs(frontendMoneyDiff - expectedDiff) > tolerance) {
+      // 校验失败：前端值偏差过大，强制使用后端计算值
+      console.warn(`⚠️ [MONEY MISMATCH] Player ${req.params.id}: FrontendDiff=${frontendMoneyDiff}, BackendDiff=${expectedDiff}, Tolerance=${tolerance}`);
+      finalMoney = dbMoney + backendEarnings;
+      finalTotalMoneyEarned = (Number(player.totalMoneyEarned) || 0) + backendEarnings;
+    } else {
+      // 校验通过：信任前端累加值，但仍加上后端计算的增量（防止前端漏加）
+      finalMoney = frontendMoney + backendEarnings;
+      finalTotalMoneyEarned = (Number(totalMoneyEarned) || 0) + backendEarnings;
+    }
+    
     const finalTotalIdleTime = (Number(totalIdleTime) || 0) + elapsed;
     
     // 3. currentSeat：显式检查 NaN，防止字符串 ID 被误转，同时拦截 NaN
@@ -157,7 +175,7 @@ router.post('/:id/save', async (req, res) => {
       WHERE id = $9
     `, [finalMoney, safeIdleRate, safeBonus, safeCurrentSeat, Number(seatCooldown) || 0, finalTotalIdleTime, finalTotalMoneyEarned, Number(totalGachaCount) || 0, req.params.id]);
     
-    res.json({ success: true, backendEarnings });
+    res.json({ success: true, backendEarnings, money: finalMoney, totalMoneyEarned: finalTotalMoneyEarned });
   } catch (err) {
     console.error('Error in /save:', err);
     res.status(500).json({ error: 'Internal server error' });

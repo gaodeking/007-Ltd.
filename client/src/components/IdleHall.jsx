@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { seatApi } from '../api';
+import { seatApi, playerApi } from '../api';
 import NPCPeachBox from './NPCPeachBox';
 
-function IdleHall({ playerId, player, seats, setSeats, setPlayer }) {
+function IdleHall({ playerId, player, seats, setSeats, setPlayer, playerRef }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -36,6 +36,14 @@ function IdleHall({ playerId, player, seats, setSeats, setPlayer }) {
       const res = await seatApi.getAll();
       setSeats(res.data);
       setPlayer(prev => ({ ...prev, currentSeat: null }));
+      
+      // 离座后立即触发保存，确保收益结算
+      try {
+        await playerApi.save(playerId, playerRef.current);
+      } catch (saveErr) {
+        console.warn('Failed to save on leave:', saveErr);
+      }
+      
       setMessage('✅ 已离开座位');
       setTimeout(() => setMessage(''), 2000);
     } catch (err) {

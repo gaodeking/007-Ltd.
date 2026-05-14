@@ -121,16 +121,31 @@ function App() {
     loadTasks();
   }, [playerId]);
 
-  // Auto-save every 30 seconds (using ref to avoid timer reset)
+  // Auto-save every 15 seconds (using ref to avoid timer reset)
   useEffect(() => {
     if (!playerId || !playerRef.current) return;
     const saveInterval = setInterval(async () => {
       try {
-        await playerApi.save(playerId, playerRef.current);
+        const res = await playerApi.save(playerId, playerRef.current);
+        // 保存成功后同步后端返回的 money 值，确保前后端一致
+        if (res.data.money !== undefined) {
+          setPlayer(prev => ({
+            ...prev,
+            money: res.data.money,
+            totalMoneyEarned: res.data.totalMoneyEarned
+          }));
+        }
       } catch (err) {
-        console.error('Failed to save:', err);
+        console.warn('Save failed, syncing with server...', err);
+        // 保存失败时从后端同步最新值
+        try {
+          const res = await playerApi.get(playerId);
+          setPlayer(prev => ({ ...prev, money: res.data.money }));
+        } catch (syncErr) {
+          console.error('Sync failed:', syncErr);
+        }
       }
-    }, 30000);
+    }, 15000);
     return () => clearInterval(saveInterval);
   }, [playerId]);
 
@@ -272,6 +287,7 @@ function App() {
               seats={seats} 
               setSeats={setSeats}
               setPlayer={setPlayer}
+              playerRef={playerRef}
             />
             
             {/* 右侧栏容器 */}
