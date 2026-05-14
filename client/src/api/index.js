@@ -46,4 +46,8 @@ export const bugApi = {
   report: (playerId, description) => api.post('/bugs', { playerId, description }),
 };
 
+export const announcementApi = {
+  getLatest: () => api.get('/announcements'),
+};
+
 export default api;

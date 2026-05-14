@@ -1,8 +1,39 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { announcementApi } from '../api';
 import BugReportModal from './BugReportModal';
 
 function AnnouncementPanel({ playerId }) {
   const [showBugModal, setShowBugModal] = useState(false);
+  const [announcement, setAnnouncement] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchAnnouncement = async () => {
+      try {
+        const res = await announcementApi.getLatest();
+        setAnnouncement(res.data);
+      } catch (err) {
+        setError('加载失败，请稍后重试');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnnouncement();
+  }, []);
+
+  const formatTime = (dateString) => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+  };
 
   return (
     <>
@@ -16,8 +47,27 @@ function AnnouncementPanel({ playerId }) {
             🐛 上报 Bug
           </button>
         </div>
-        <div className="text-sm text-[#6b5b5b] bg-[#f5f0f0] rounded-lg p-3">
-          这是一个公告
+        
+        <div className="text-sm text-[#6b5b5b] bg-[#f5f0f0] rounded-lg p-3 min-h-[80px]">
+          {loading ? (
+            <span className="text-[#9ca3af]">加载中...</span>
+          ) : error ? (
+            <span className="text-red-500">{error}</span>
+          ) : !announcement ? (
+            <span className="text-[#9ca3af]">暂无公告</span>
+          ) : (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 bg-[#d4a0a0] text-white text-xs rounded font-bold">
+                  {announcement.version}
+                </span>
+              </div>
+              <p className="leading-relaxed whitespace-pre-wrap">{announcement.content}</p>
+              <div className="text-xs text-[#9ca3af] text-right">
+                 {formatTime(announcement.created_at)}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
