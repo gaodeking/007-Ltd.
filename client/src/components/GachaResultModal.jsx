@@ -1,5 +1,63 @@
 import { useState, useEffect } from 'react';
 
+// 将样式函数提取到外部
+const getRarityStyle = (rarity) => {
+  switch (rarity) {
+    case 'ssr': return { bg: 'from-[#f59e0b] to-[#d97706]', text: 'text-white', badge: 'bg-[#f59e0b]' };
+    case 'sr': return { bg: 'from-[#a855f7] to-[#7e22ce]', text: 'text-white', badge: 'bg-[#a855f7]' };
+    case 'r': return { bg: 'from-[#3b82f6] to-[#1d4ed8]', text: 'text-white', badge: 'bg-[#3b82f6]' };
+    default: return { bg: 'from-[#f3f4f6] to-[#e5e7eb]', text: 'text-[#6b7280]', badge: 'bg-[#9ca3af]' };
+  }
+};
+
+// 将 Card 组件提取到外部，防止父组件更新导致重新挂载和动画重置
+const Card = ({ item, index }) => {
+  const style = getRarityStyle(item.item.rarity);
+  return (
+    <div className="perspective-1000 w-32 h-40">
+      <div 
+        className="relative w-full h-full transition-transform duration-700 transform-style-3d animate-flip-reveal"
+        style={{ 
+          animationDelay: `${index * 0.1}s`, 
+          animationFillMode: 'forwards',
+          transformStyle: 'preserve-3d'
+        }}
+      >
+        {/* Back (Gray) */}
+        <div className="absolute inset-0 bg-gray-300 rounded-xl backface-hidden flex items-center justify-center border-2 border-gray-400" style={{ backfaceVisibility: 'hidden' }}>
+          <span className="text-4xl text-gray-400 font-bold">?</span>
+        </div>
+        
+        {/* Front (Result) - Initially rotated 180deg */}
+        <div 
+          className="absolute inset-0 rounded-xl overflow-hidden border-2 border-white/20 shadow-lg rotate-y-180"
+          style={{ 
+            backfaceVisibility: 'hidden',
+            transform: 'rotateY(180deg)',
+            background: `linear-gradient(135deg, var(--tw-gradient-from), var(--tw-gradient-to))`,
+            '--tw-gradient-from': style.bg.includes('#f59e0b') ? '#f59e0b' : 
+                                  style.bg.includes('#a855f7') ? '#a855f7' : 
+                                  style.bg.includes('#3b82f6') ? '#3b82f6' : '#f3f4f6',
+            '--tw-gradient-to': style.bg.includes('#d97706') ? '#d97706' : 
+                                style.bg.includes('#7e22ce') ? '#7e22ce' : 
+                                style.bg.includes('#1d4ed8') ? '#1d4ed8' : '#e5e7eb',
+          }}
+        >
+          <div className="absolute top-2 right-2 z-10">
+            <span className={`px-2 py-0.5 rounded text-xs font-bold text-white ${style.badge} shadow-sm`}>
+              {item.item.rarity.toUpperCase()}
+            </span>
+          </div>
+          <div className="flex flex-col items-center justify-center h-full p-2 text-center relative z-10">
+            <span className="text-4xl mb-2 drop-shadow-md">{item.item.emoji}</span>
+            <span className={`font-bold text-sm ${style.text} drop-shadow-md leading-tight`}>{item.item.name}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 function GachaResultModal({ results, pullCount, playerMoney, onClose, onPullAgain }) {
   const [show, setShow] = useState(false);
 
@@ -11,62 +69,6 @@ function GachaResultModal({ results, pullCount, playerMoney, onClose, onPullAgai
   const maxRarity = results.reduce((max, item) => 
     rarityOrder[item.item.rarity] > rarityOrder[max.item.rarity] ? item : max
   , results[0]);
-
-  const getRarityStyle = (rarity) => {
-    switch (rarity) {
-      case 'ssr': return { bg: 'from-[#f59e0b] to-[#d97706]', text: 'text-white', badge: 'bg-[#f59e0b]' };
-      case 'sr': return { bg: 'from-[#a855f7] to-[#7e22ce]', text: 'text-white', badge: 'bg-[#a855f7]' };
-      case 'r': return { bg: 'from-[#3b82f6] to-[#1d4ed8]', text: 'text-white', badge: 'bg-[#3b82f6]' };
-      default: return { bg: 'from-[#f3f4f6] to-[#e5e7eb]', text: 'text-[#6b7280]', badge: 'bg-[#9ca3af]' };
-    }
-  };
-
-  const Card = ({ item, index }) => {
-    const style = getRarityStyle(item.item.rarity);
-    return (
-      <div className="perspective-1000 w-32 h-40">
-        <div 
-          className="relative w-full h-full transition-transform duration-700 transform-style-3d animate-flip-reveal"
-          style={{ 
-            animationDelay: `${index * 0.1}s`, 
-            animationFillMode: 'forwards',
-            transformStyle: 'preserve-3d'
-          }}
-        >
-          {/* Back (Gray) */}
-          <div className="absolute inset-0 bg-gray-300 rounded-xl backface-hidden flex items-center justify-center border-2 border-gray-400" style={{ backfaceVisibility: 'hidden' }}>
-            <span className="text-4xl text-gray-400 font-bold">?</span>
-          </div>
-          
-          {/* Front (Result) - Initially rotated 180deg */}
-          <div 
-            className="absolute inset-0 rounded-xl overflow-hidden border-2 border-white/20 shadow-lg rotate-y-180"
-            style={{ 
-              backfaceVisibility: 'hidden',
-              transform: 'rotateY(180deg)',
-              background: `linear-gradient(135deg, var(--tw-gradient-from), var(--tw-gradient-to))`,
-              '--tw-gradient-from': style.bg.includes('#f59e0b') ? '#f59e0b' : 
-                                    style.bg.includes('#a855f7') ? '#a855f7' : 
-                                    style.bg.includes('#3b82f6') ? '#3b82f6' : '#f3f4f6',
-              '--tw-gradient-to': style.bg.includes('#d97706') ? '#d97706' : 
-                                  style.bg.includes('#7e22ce') ? '#7e22ce' : 
-                                  style.bg.includes('#1d4ed8') ? '#1d4ed8' : '#e5e7eb',
-            }}
-          >
-            <div className="absolute top-2 right-2 z-10">
-              <span className={`px-2 py-0.5 rounded text-xs font-bold text-white ${style.badge} shadow-sm`}>
-                {item.item.rarity.toUpperCase()}
-              </span>
-            </div>
-            <div className="flex flex-col items-center justify-center h-full p-2 text-center relative z-10">
-              <span className="text-4xl mb-2 drop-shadow-md">{item.item.emoji}</span>
-              <span className={`font-bold text-sm ${style.text} drop-shadow-md leading-tight`}>{item.item.name}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
