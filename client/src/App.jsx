@@ -13,6 +13,7 @@ import PlayerInfoCard from './components/PlayerInfoCard';
 import AnnouncementPanel from './components/AnnouncementPanel';
 import ArcadePanel from './components/ArcadePanel';
 import OnboardingModal from './components/OnboardingModal';
+import VersionChecker from './components/VersionChecker';
 
 function App() {
   const [playerId, setPlayerId] = useState(null);
@@ -250,6 +251,7 @@ function App() {
 
   return (
     <ErrorBoundary>
+      <VersionChecker playerId={playerId} playerRef={playerRef} />
       <div className="min-h-screen bg-[#f0ebe5] text-[#4a3a3a] flex flex-col" style={{ minWidth: '1200px' }}>
         <CurrencyBar />
         

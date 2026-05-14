@@ -1,8 +1,25 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import fs from 'fs'
+import path from 'path'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: 'generate-version',
+      closeBundle() {
+        const version = {
+          version: Date.now().toString(),
+          timestamp: new Date().toISOString()
+        };
+        fs.writeFileSync(
+          path.resolve(__dirname, 'dist/version.json'),
+          JSON.stringify(version)
+        );
+      }
+    }
+  ],
   base: './',
   server: {
     port: 3000,
