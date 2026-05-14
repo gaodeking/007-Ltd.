@@ -79,10 +79,16 @@ router.post('/:id/save', async (req, res) => {
     if (player.currentSeat && elapsed > 0) {
       backendEarnings = Math.floor(elapsed * safeIdleRate * safeBonus);
     }
+
+    // 异常收益监控：如果单次结算超过 10000 金币，记录警告日志
+    if (backendEarnings > 10000) {
+      console.warn(`⚠️ [SUSPICIOUS] Player ${req.params.id} earned ${backendEarnings} gold in ${elapsed}s`);
+    }
     
-    // 2. 金币与统计字段：使用 Number(val) || 0，NaN 和 null 均回退到 0
-    const finalMoney = Math.max(Number(money) || 0, (Number(player.money) || 0) + backendEarnings);
-    const finalTotalMoneyEarned = Math.max(Number(totalMoneyEarned) || 0, (Number(player.totalMoneyEarned) || 0) + backendEarnings);
+    // 2. 金币与统计字段：后端作为唯一真理来源，防止客户端作弊
+    // 使用后端计算的增量累加到数据库现有值上
+    const finalMoney = (Number(player.money) || 0) + backendEarnings;
+    const finalTotalMoneyEarned = (Number(player.totalMoneyEarned) || 0) + backendEarnings;
     const finalTotalIdleTime = (Number(totalIdleTime) || 0) + elapsed;
     
     // 3. currentSeat：显式检查 NaN，防止字符串 ID 被误转，同时拦截 NaN

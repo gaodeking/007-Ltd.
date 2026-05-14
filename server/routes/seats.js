@@ -65,9 +65,18 @@ router.post('/:seatId/sit', async (req, res) => {
 
     await db.run('UPDATE seats SET "playerId" = $1 WHERE "seatId" = $2', [playerId, seatId]);
     
-    const cooldownDuration = player.currentSeat ? CHANGE_SEAT_COOLDOWN : FIRST_SIT_COOLDOWN;
-    await db.run('UPDATE players SET "currentSeat" = $1, "seatCooldown" = $2, "lastHeartbeat" = $3 WHERE id = $4',
-      [seatId, now + cooldownDuration, now, playerId]);
+    const isFirstSit = !player.currentSeat;
+    const cooldownDuration = isFirstSit ? FIRST_SIT_COOLDOWN : CHANGE_SEAT_COOLDOWN;
+    
+    if (isFirstSit) {
+      // 首次入座：重置 lastSave，防止计算入座前的时间
+      await db.run('UPDATE players SET "currentSeat" = $1, "seatCooldown" = $2, "lastHeartbeat" = $3, "lastSave" = $4 WHERE id = $5',
+        [seatId, now + cooldownDuration, now, now, playerId]);
+    } else {
+      // 换座：保持 lastSave 不变，确保旧座位的收益能结算
+      await db.run('UPDATE players SET "currentSeat" = $1, "seatCooldown" = $2, "lastHeartbeat" = $3 WHERE id = $4',
+        [seatId, now + cooldownDuration, now, playerId]);
+    }
 
     res.json({ success: true, seatId });
   } catch (err) {
