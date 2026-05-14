@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 
 // 将样式函数提取到外部
 const getRarityStyle = (rarity) => {
@@ -59,12 +59,6 @@ const Card = ({ item, index }) => {
 };
 
 function GachaResultModal({ results, pullCount, playerMoney, onClose, onPullAgain }) {
-  const [show, setShow] = useState(false);
-
-  useEffect(() => {
-    setShow(true);
-  }, []);
-
   const rarityOrder = { ssr: 4, sr: 3, r: 2, n: 1 };
   const maxRarity = results.reduce((max, item) => 
     rarityOrder[item.item.rarity] > rarityOrder[max.item.rarity] ? item : max

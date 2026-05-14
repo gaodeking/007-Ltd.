@@ -8,6 +8,7 @@ function GachaModal({ playerId, player, setPlayer, onClose }) {
   const [results, setResults] = useState([]);
   const [pullCount, setPullCount] = useState(1);
   const [animating, setAnimating] = useState(false);
+  const [pullSession, setPullSession] = useState(0);
 
   useEffect(() => {
     gachaApi.getPool().then(res => setPool(res.data));
@@ -23,6 +24,7 @@ function GachaModal({ playerId, player, setPlayer, onClose }) {
     try {
       const res = await gachaApi.pull(playerId, count);
       setResults(res.data.results || []);
+      setPullSession(s => s + 1);
       setPlayer(prev => ({
         ...prev,
         money: prev.money - cost
@@ -119,6 +121,7 @@ function GachaModal({ playerId, player, setPlayer, onClose }) {
 
       {showResult && (
         <GachaResultModal
+          key={pullSession}
           results={results}
           pullCount={pullCount}
           playerMoney={player.money}
