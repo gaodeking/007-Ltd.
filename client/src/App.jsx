@@ -144,7 +144,7 @@ function App() {
       } catch (err) {
         console.error('Heartbeat failed:', err);
       }
-    }, 15000);
+    }, 30000);
     return () => clearInterval(heartbeatInterval);
   }, [playerId, player?.currentSeat]);
 
