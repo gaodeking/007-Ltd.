@@ -3,10 +3,28 @@ const router = express.Router();
 const db = require('../models/db');
 const gachaConfig = require('../config/gacha.json');
 
+// Default limits fallback
+const DEFAULT_LIMITS = { ssr: 1, sr: 4, r: 8 };
+
+async function getGachaLimits() {
+  try {
+    const rows = await db.all('SELECT rarity, limit FROM gacha_limits');
+    const limits = { ...DEFAULT_LIMITS };
+    rows.forEach(row => {
+      limits[row.rarity] = row.limit;
+    });
+    return limits;
+  } catch (err) {
+    console.warn('Failed to load gacha limits, using defaults:', err.message);
+    return DEFAULT_LIMITS;
+  }
+}
+
 router.get('/pool', async (req, res) => {
   try {
     const playerId = req.headers['x-player-id'];
     const pool = gachaConfig.pools.normal;
+    const limits = await getGachaLimits();
     
     // Get stock info
     const stocks = await db.all('SELECT "prizeId", "remaining", "total" FROM prize_stock');
@@ -24,7 +42,7 @@ router.get('/pool', async (req, res) => {
     // Assemble response
     const itemsWithStock = pool.items.map(item => {
       const stock = item.stockRef ? stockMap[item.stockRef] : null;
-      const limit = gachaConfig.personalLimits[item.rarity];
+      const limit = limits[item.rarity];
       const personalCount = countMap[item.rarity] || 0;
       const isExhausted = stock ? stock.remaining <= 0 : false;
       const isLimitReached = limit && personalCount >= limit;
@@ -61,6 +79,9 @@ router.post('/pull', async (req, res) => {
       return res.status(400).json({ error: '金币不足' });
     }
     
+    // Fetch dynamic limits
+    const limits = await getGachaLimits();
+
     // Batch query: get all stocks and personal counts once
     const stocks = await db.all('SELECT "prizeId", "remaining" FROM prize_stock');
     const stockMap = {};
@@ -82,7 +103,7 @@ router.post('/pull', async (req, res) => {
       const availableItems = pool.items.filter(item => {
         if (!item.stockRef) return true; // Thanks for participating is infinite
         if (stockMap[item.stockRef] <= 0) return false; // Stock exhausted
-        const limit = gachaConfig.personalLimits[item.rarity];
+        const limit = limits[item.rarity];
         const currentCount = (countMap[item.rarity] || 0) + (rarityCounts[item.rarity] || 0);
         if (limit && currentCount >= limit) return false; // Personal limit reached
         return true;
