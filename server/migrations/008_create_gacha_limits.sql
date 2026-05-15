@@ -4,9 +4,9 @@ CREATE TABLE IF NOT EXISTS gacha_limits (
   "limit" INTEGER NOT NULL CHECK ("limit" >= 0)
 );
 
--- Insert initial limits (SSR: 1, SR: 4, R: 8)
+-- Insert initial limits (SSR: 1, SR: 3, R: 5)
 INSERT INTO gacha_limits (rarity, "limit") VALUES 
   ('ssr', 1), 
-  ('sr', 4), 
-  ('r', 8)
+  ('sr', 3), 
+  ('r', 5)
 ON CONFLICT (rarity) DO NOTHING;

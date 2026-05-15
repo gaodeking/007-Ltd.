@@ -3,15 +3,15 @@ const router = express.Router();
 const db = require('../models/db');
 const gachaConfig = require('../config/gacha.json');
 
-// Default limits fallback
-const DEFAULT_LIMITS = { ssr: 1, sr: 4, r: 8 };
+// Default limits fallback (Updated: SSR:1, SR:3, R:5)
+const DEFAULT_LIMITS = { ssr: 1, sr: 3, r: 5 };
 
 async function getGachaLimits() {
   try {
     const rows = await db.all('SELECT rarity, limit FROM gacha_limits');
     const limits = { ...DEFAULT_LIMITS };
     rows.forEach(row => {
-      limits[row.rarity] = row.limit;
+      limits[row.rarity.toLowerCase()] = row.limit;
     });
     return limits;
   } catch (err) {
@@ -66,34 +66,48 @@ router.get('/pool', async (req, res) => {
 });
 
 router.post('/pull', async (req, res) => {
+  const client = await db.pool.connect();
   try {
     const { playerId, count = 1 } = req.body;
     
-    const player = await db.get('SELECT "id", "name", "money", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt", "ssrCount", "srCount", "rCount" FROM players WHERE id = $1', [playerId]);
-    if (!player) return res.status(404).json({ error: 'Player not found' });
+    // Start Transaction
+    await client.query('BEGIN');
+
+    // Lock player row to prevent race conditions
+    const playerRes = await client.query(
+      'SELECT * FROM players WHERE id = $1 FOR UPDATE', 
+      [playerId]
+    );
+    const player = playerRes.rows[0];
+
+    if (!player) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Player not found' });
+    }
     
     const pool = gachaConfig.pools.normal;
     const cost = count === 10 ? pool.tenCost : pool.singleCost * count;
     
     if (player.money < cost) {
+      await client.query('ROLLBACK');
       return res.status(400).json({ error: '金币不足' });
     }
     
     // Fetch dynamic limits
     const limits = await getGachaLimits();
 
-    // Batch query: get all stocks and personal counts once
-    const stocks = await db.all('SELECT "prizeId", "remaining" FROM prize_stock');
+    // Batch query: get all stocks
+    const stocks = await client.query('SELECT "prizeId", "remaining" FROM prize_stock');
     const stockMap = {};
-    stocks.forEach(s => stockMap[s.prizeId] = s.remaining);
+    stocks.rows.forEach(s => stockMap[s.prizeId] = s.remaining);
     
-    const personalCounts = await db.all(
-      'SELECT "rarity", COUNT(*) as count FROM gacha_log WHERE "playerId" = $1 GROUP BY "rarity"',
-      [playerId]
-    );
-    const countMap = {};
-    personalCounts.forEach(c => countMap[c.rarity] = parseInt(c.count));
-    
+    // Use player counts directly (they are locked and consistent within transaction)
+    const currentCounts = {
+      ssr: player.ssrCount || 0,
+      sr: player.srCount || 0,
+      r: player.rCount || 0
+    };
+
     const results = [];
     const stockUpdates = {};
     const rarityCounts = { ssr: 0, sr: 0, r: 0 };
@@ -103,9 +117,12 @@ router.post('/pull', async (req, res) => {
       const availableItems = pool.items.filter(item => {
         if (!item.stockRef) return true; // Thanks for participating is infinite
         if (stockMap[item.stockRef] <= 0) return false; // Stock exhausted
+        
         const limit = limits[item.rarity];
-        const currentCount = (countMap[item.rarity] || 0) + (rarityCounts[item.rarity] || 0);
+        // Check against locked player counts + current batch counts
+        const currentCount = (currentCounts[item.rarity] || 0) + (rarityCounts[item.rarity] || 0);
         if (limit && currentCount >= limit) return false; // Personal limit reached
+        
         return true;
       });
       
@@ -140,38 +157,47 @@ router.post('/pull', async (req, res) => {
       });
     }
     
-    // Deduct money
-    await db.run('UPDATE players SET "money" = "money" - $1, "totalGachaCount" = "totalGachaCount" + $2 WHERE id = $3',
-      [cost, count, playerId]);
+    // Deduct money and update counts
+    const newSsrCount = player.ssrCount + rarityCounts.ssr;
+    const newSrCount = player.srCount + rarityCounts.sr;
+    const newRCount = player.rCount + rarityCounts.r;
+    const newTotalGachaCount = player.totalGachaCount + results.length;
+    const newMoney = player.money - cost;
+
+    await client.query(
+      'UPDATE players SET "money" = $1, "totalGachaCount" = $2, "ssrCount" = $3, "srCount" = $4, "rCount" = $5 WHERE id = $6',
+      [newMoney, newTotalGachaCount, newSsrCount, newSrCount, newRCount, playerId]
+    );
     
     // Update stock
     for (const [prizeId, deduct] of Object.entries(stockUpdates)) {
-      await db.run('UPDATE prize_stock SET remaining = remaining - $1 WHERE "prizeId" = $2 AND remaining >= $1',
-        [deduct, prizeId]);
-    }
-    
-    // Update personal counts
-    for (const [rarity, addCount] of Object.entries(rarityCounts)) {
-      if (addCount > 0) {
-        const countField = rarity === 'ssr' ? 'ssrCount' : rarity === 'sr' ? 'srCount' : 'rCount';
-        await db.run(`UPDATE players SET "${countField}" = "${countField}" + $1 WHERE id = $2`,
-          [addCount, playerId]);
-      }
+      await client.query(
+        'UPDATE prize_stock SET remaining = remaining - $1 WHERE "prizeId" = $2 AND remaining >= $1',
+        [deduct, prizeId]
+      );
     }
     
     // Record gacha logs
     for (const result of results) {
-      await db.run('INSERT INTO gacha_log ("playerId", "itemId", "rarity", "player_name") VALUES ($1, $2, $3, $4)',
-        [playerId, result.item.id, result.item.rarity, player.name]);
+      await client.query(
+        'INSERT INTO gacha_log ("playerId", "itemId", "rarity") VALUES ($1, $2, $3)',
+        [playerId, result.item.id, result.item.rarity]
+      );
     }
+    
+    // Commit Transaction
+    await client.query('COMMIT');
     
     res.json({
       results,
       count: results.length
     });
   } catch (err) {
+    await client.query('ROLLBACK');
     console.error('Pull error:', err);
     res.status(500).json({ error: 'Internal server error' });
+  } finally {
+    client.release();
   }
 });
 
