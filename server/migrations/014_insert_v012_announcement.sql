@@ -1,3 +1,6 @@
+-- Deactivate all old announcements
+UPDATE announcements SET active = FALSE;
+
 -- Insert v0.1.2 Announcement
 INSERT INTO announcements ("content", "version", "active", "created_at")
 VALUES (
@@ -29,5 +32,5 @@ VALUES (
 --- 007 公司摸鱼管理部',
   'v0.1.2',
   TRUE,
-  EXTRACT(EPOCH FROM NOW())::INTEGER
+  NOW()
 );
