@@ -22,6 +22,7 @@ async function start() {
   const bugRoutes = require('./routes/bugs');
   const announcementRoutes = require('./routes/announcements');
   const versionRoutes = require('./routes/version');
+  const broadcastRoutes = require('./routes/broadcast');
 
   app.use('/api/player', playerRoutes);
   app.use('/api/seats', seatRoutes);
@@ -30,6 +31,7 @@ async function start() {
   app.use('/api/bugs', bugRoutes);
   app.use('/api/announcements', announcementRoutes);
   app.use('/api/version', versionRoutes);
+  app.use('/api/broadcast', broadcastRoutes);
 
   // Health check
   app.get('/api/health', (req, res) => {

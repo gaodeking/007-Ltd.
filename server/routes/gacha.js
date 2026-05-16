@@ -185,6 +185,36 @@ router.post('/pull', async (req, res) => {
       );
     }
     
+    // Broadcast gacha wins (SSR, SR, R)
+    const broadcastItems = results.filter(r => ['ssr', 'sr', 'r'].includes(r.item.rarity));
+    for (const result of broadcastItems) {
+      let content = '';
+      const rarity = result.item.rarity;
+      const name = player.name || '无名冒险者';
+      const itemName = result.item.name;
+      
+      if (rarity === 'ssr') {
+        content = `🔥 **${name}** 抽中了 **SSR ${itemName}**！`;
+      } else if (rarity === 'sr') {
+        content = `🎉 **${name}** 抽中了 **SR ${itemName}**。`;
+      } else if (rarity === 'r') {
+        content = `✨ **${name}** 抽中了 **R ${itemName}**。`;
+      }
+      
+      await client.query(
+        'INSERT INTO broadcast_messages (content, rarity) VALUES ($1, $2)',
+        [content, rarity]
+      );
+    }
+    
+    // Cleanup old broadcasts (keep latest 50)
+    await client.query(`
+      DELETE FROM broadcast_messages 
+      WHERE id NOT IN (
+        SELECT id FROM broadcast_messages ORDER BY created_at DESC LIMIT 50
+      )
+    `);
+    
     // Commit Transaction
     await client.query('COMMIT');
     

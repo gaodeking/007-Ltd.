@@ -50,4 +50,8 @@ export const announcementApi = {
   getLatest: () => api.get('/announcements'),
 };
 
+export const broadcastApi = {
+  getMessages: () => api.get('/broadcast'),
+};
+
 export default api;
