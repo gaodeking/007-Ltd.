@@ -59,4 +59,12 @@ export const activityApi = {
   clearStatus: (playerId) => api.post('/activity/status/clear', { playerId }),
 };
 
+export const scratchApi = {
+  buy: (playerId) => api.post('/scratch/buy', { playerId }),
+  reveal: (playerId, row, col) => api.post('/scratch/reveal', { playerId, row, col }),
+  claim: (playerId) => api.post('/scratch/claim', { playerId }),
+  getEarnings: () => api.get('/scratch/earnings'),
+  getCurrent: () => api.get('/scratch/current'),
+};
+
 export default api;

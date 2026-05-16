@@ -340,7 +340,13 @@ function App() {
                 playerId={playerId}
               />
               <AnnouncementPanel playerId={playerId} />
-              <ArcadePanel />
+              <ArcadePanel 
+                playerId={playerId}
+                player={player}
+                setPlayer={setPlayer}
+                enterActivity={enterActivity}
+                leaveActivity={leaveActivity}
+              />
             </div>
             
             {/* 中间栏底部 - 光之冒险 */}
