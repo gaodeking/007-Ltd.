@@ -22,13 +22,13 @@ export const playerApi = {
   save: (id, data) => api.post(`/player/${id}/save`, data),
   getOfflineEarnings: (id) => api.get(`/player/${id}/offline-earnings`),
   claimOffline: (id) => api.post(`/player/${id}/claim-offline`),
-  heartbeat: (id) => api.post(`/player/${id}/heartbeat`),
+  heartbeat: (id, options = {}) => api.post(`/player/${id}/heartbeat`, options),
 };
 
 export const seatApi = {
   getAll: () => api.get('/seats'),
   sit: (seatId, playerId) => api.post(`/seats/${seatId}/sit`, { playerId }),
-  leave: (playerId) => api.post('/seats/leave', { playerId }),
+  leave: (playerId, force = false) => api.post('/seats/leave', { playerId, force }),
 };
 
 export const gachaApi = {
@@ -52,6 +52,11 @@ export const announcementApi = {
 
 export const broadcastApi = {
   getMessages: () => api.get('/broadcast'),
+};
+
+export const activityApi = {
+  setStatus: (playerId, activityId) => api.post('/activity/status', { playerId, activityId }),
+  clearStatus: (playerId) => api.post('/activity/status/clear', { playerId }),
 };
 
 export default api;

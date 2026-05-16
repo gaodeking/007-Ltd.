@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect, useRef } from 'react';
-import { playerApi, seatApi, gachaApi, taskApi, announcementApi } from './api';
+import { playerApi, seatApi, gachaApi, taskApi, announcementApi, activityApi } from './api';
 import ErrorBoundary from './components/ErrorBoundary';
 import CurrencyBar from './components/CurrencyBar';
 import IdleHall from './components/IdleHall';
@@ -30,11 +30,13 @@ function App() {
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
   const [showDailyLoginModal, setShowDailyLoginModal] = useState(false);
   const [announcement, setAnnouncement] = useState(null);
+  const [activityStatus, setActivityStatus] = useState(null);
   const playerRef = useRef(player);
   playerRef.current = player;
   const currentSeatRef = useRef(null);
   const idleRateRef = useRef(1);
   const bonusRef = useRef(1.0);
+  const activityStatusRef = useRef(null);
 
   // Initialize player
   useEffect(() => {
@@ -59,7 +61,11 @@ function App() {
           totalMoneyEarned: playerData.totalMoneyEarned || 0,
           totalGachaCount: playerData.totalGachaCount || 0,
           lastSave: playerData.lastSave || Math.floor(Date.now() / 1000),
+          activityStatus: playerData.activityStatus || null,
         });
+        
+        setActivityStatus(playerData.activityStatus || null);
+        activityStatusRef.current = playerData.activityStatus || null;
         
         console.log(' [DEBUG] Player Data from Server:', res.data.player);
         localStorage.setItem('playerId', res.data.playerId);
@@ -178,7 +184,7 @@ function App() {
     if (!playerId || !player?.currentSeat) return;
     const heartbeatInterval = setInterval(async () => {
       try {
-        await playerApi.heartbeat(playerId);
+        await playerApi.heartbeat(playerId, { activityStatus: activityStatusRef.current });
       } catch (err) {
         console.error('Heartbeat failed:', err);
       }
@@ -191,7 +197,8 @@ function App() {
     currentSeatRef.current = player?.currentSeat;
     idleRateRef.current = player?.idleRate;
     bonusRef.current = player?.bonus;
-  }, [player?.currentSeat, player?.idleRate, player?.bonus]);
+    activityStatusRef.current = player?.activityStatus;
+  }, [player?.currentSeat, player?.idleRate, player?.bonus, player?.activityStatus]);
 
   // 金币增长定时器（每 5 秒）
   // 使用 Refs 避免 loadSeats 导致的频繁重置
@@ -211,6 +218,27 @@ function App() {
     }, 5000);
     return () => clearInterval(earnInterval);
   }, [player?.currentSeat]);
+
+  // 活动状态管理
+  const enterActivity = async (activityId) => {
+    try {
+      await activityApi.setStatus(playerId, activityId);
+      setActivityStatus(activityId);
+      activityStatusRef.current = activityId;
+    } catch (err) {
+      console.error('Failed to enter activity:', err);
+    }
+  };
+
+  const leaveActivity = async () => {
+    try {
+      await activityApi.clearStatus(playerId);
+      setActivityStatus(null);
+      activityStatusRef.current = null;
+    } catch (err) {
+      console.error('Failed to leave activity:', err);
+    }
+  };
 
   if (loading) {
     return (
@@ -301,6 +329,11 @@ function App() {
               setSeats={setSeats}
               setPlayer={setPlayer}
               playerRef={playerRef}
+              activityStatus={activityStatus}
+              setActivityStatus={setActivityStatus}
+              activityStatusRef={activityStatusRef}
+              enterActivity={enterActivity}
+              leaveActivity={leaveActivity}
             />
             
             {/* 右侧栏容器 */}

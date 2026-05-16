@@ -74,6 +74,7 @@ router.get('/init', async (req, res) => {
       totalMoneyEarned: player.totalMoneyEarned,
       totalGachaCount: player.totalGachaCount,
       lastSave: player.lastSave,
+      activityStatus: player.activityStatus || null,
       createdAt: player.createdAt,
       showOnboarding,
       showDailyLogin
@@ -233,8 +234,21 @@ router.post('/:id/claim-offline', async (req, res) => {
 
 router.post('/:id/heartbeat', async (req, res) => {
   try {
-    await db.run('UPDATE players SET "lastHeartbeat" = EXTRACT(EPOCH FROM NOW())::INTEGER WHERE id = $1',
-      [req.params.id]);
+    const { activityStatus } = req.body;
+    const now = Math.floor(Date.now() / 1000);
+    
+    if (activityStatus !== undefined) {
+      await db.run(
+        'UPDATE players SET "lastHeartbeat" = $1, "activityStatus" = $2 WHERE id = $3',
+        [now, activityStatus || null, req.params.id]
+      );
+    } else {
+      await db.run(
+        'UPDATE players SET "lastHeartbeat" = $1 WHERE id = $2',
+        [now, req.params.id]
+      );
+    }
+    
     res.json({ success: true });
   } catch (err) {
     console.error('Error in /heartbeat:', err);

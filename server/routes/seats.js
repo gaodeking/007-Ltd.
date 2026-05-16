@@ -25,7 +25,9 @@ router.get('/', async (req, res) => {
     }
     
     const seats = await db.all(`
-      SELECT s."seatId" as "seatId", s."playerId" as "playerId", s.bonus, s.position, p.name as "playerName", p.avatar as "playerAvatar"
+      SELECT s."seatId" as "seatId", s."playerId" as "playerId", s.bonus, s.position, 
+             p.name as "playerName", p.avatar as "playerAvatar", 
+             p."activityStatus", p."lastHeartbeat"
       FROM seats s
       LEFT JOIN players p ON s."playerId" = p.id
       ORDER BY s."seatId"
@@ -45,8 +47,12 @@ router.post('/:seatId/sit', async (req, res) => {
       return res.status(400).json({ error: 'Invalid seat number' });
     }
 
-    const player = await db.get('SELECT "id", "name", "money", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [playerId]);
+    const player = await db.get('SELECT "id", "name", "money", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt", "activityStatus" FROM players WHERE id = $1', [playerId]);
     if (!player) return res.status(404).json({ error: 'Player not found' });
+
+    if (player.activityStatus) {
+      return res.status(400).json({ error: '请先关闭活动页面再换座' });
+    }
 
     const now = Math.floor(Date.now() / 1000);
     if (player.seatCooldown > now) {
@@ -64,6 +70,9 @@ router.post('/:seatId/sit', async (req, res) => {
     }
 
     await db.run('UPDATE seats SET "playerId" = $1 WHERE "seatId" = $2', [playerId, seatId]);
+    
+    // 入座时自动清除活动状态
+    await db.run('UPDATE players SET "activityStatus" = NULL WHERE id = $1', [playerId]);
     
     const isFirstSit = !player.currentSeat;
     const cooldownDuration = isFirstSit ? FIRST_SIT_COOLDOWN : CHANGE_SEAT_COOLDOWN;
@@ -88,7 +97,7 @@ router.post('/leave', async (req, res) => {
   try {
     const { playerId, force } = req.body;
 
-    const player = await db.get('SELECT "id", "name", "money", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [playerId]);
+    const player = await db.get('SELECT "id", "name", "money", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt", "activityStatus" FROM players WHERE id = $1', [playerId]);
     if (!player) return res.status(404).json({ error: 'Player not found' });
 
     if (!player.currentSeat) {

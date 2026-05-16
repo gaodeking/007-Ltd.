@@ -2,7 +2,12 @@ import { useState } from 'react';
 import { seatApi, playerApi } from '../api';
 import NPCPeachBox from './NPCPeachBox';
 
-function IdleHall({ playerId, player, seats, setSeats, setPlayer, playerRef }) {
+const HEAVY_ACTIVITY_NAMES = {
+  scratch: '命运九宫格',
+  arcade: '金蝶游乐场',
+};
+
+function IdleHall({ playerId, player, seats, setSeats, setPlayer, playerRef, activityStatus, setActivityStatus, activityStatusRef, enterActivity, leaveActivity }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -37,7 +42,6 @@ function IdleHall({ playerId, player, seats, setSeats, setPlayer, playerRef }) {
       setSeats(res.data);
       setPlayer(prev => ({ ...prev, currentSeat: null }));
       
-      // 离座后立即触发保存，确保收益结算
       try {
         await playerApi.save(playerId, playerRef.current);
       } catch (saveErr) {
@@ -54,22 +58,64 @@ function IdleHall({ playerId, player, seats, setSeats, setPlayer, playerRef }) {
     }
   };
 
-  const getSeatEmoji = (seat) => {
+  const getSeatStatus = (seat) => {
+    if (!seat.playerId) return 'empty';
+    
+    const now = Math.floor(Date.now() / 1000);
+    const isOffline = !seat.lastHeartbeat || seat.lastHeartbeat < now - 120;
+    
+    if (isOffline) return 'offline';
+    if (seat.activityStatus) return 'slacking';
+    return 'online';
+  };
+
+  const getSeatEmoji = (seat, status) => {
+    if (status === 'offline') return seat.playerAvatar || '🧙‍♂️';
     if (seat.playerId === playerId) return player.avatar || '🧙‍♂️';
-    if (seat.playerId) return seat.playerAvatar || '⚔️';
-    return '🛏️';
+    return seat.playerAvatar || '⚔️';
   };
 
-  const getSeatName = (seat) => {
+  const getSeatName = (seat, status) => {
+    if (status === 'offline') return (seat.playerName || '冒险者').substring(0, 6);
     if (seat.playerId === playerId) return player.name?.substring(0, 6) || '我';
-    if (seat.playerId) return (seat.playerName || '冒险者').substring(0, 6);
-    return seat.seatId.toString();
+    return (seat.playerName || '冒险者').substring(0, 6);
   };
 
-  const getSeatClass = (seat) => {
-    if (seat.playerId === playerId) return 'ring-2 ring-[#d4a0a0] bg-[#f5e8e8]';
-    if (seat.playerId) return 'bg-[#f5f0f0] cursor-not-allowed opacity-70';
-    return 'bg-white hover:bg-[#faf5f5] cursor-pointer shadow-sm border border-[#e8e0e0]';
+  const getSeatClass = (seat, status) => {
+    switch (status) {
+      case 'online':
+        return seat.playerId === playerId 
+          ? 'ring-2 ring-[#8fbc8f] bg-[#f5faf5]' 
+          : 'bg-[#f5faf5] cursor-not-allowed';
+      case 'offline':
+        return 'grayscale opacity-50 bg-[#e8e0e0] cursor-not-allowed';
+      case 'slacking':
+        return seat.playerId === playerId 
+          ? 'ring-2 ring-[#f59e0b] bg-[#fef3c7]' 
+          : 'bg-[#fef3c7] cursor-not-allowed';
+      default:
+        return 'bg-white hover:bg-[#faf5f5] cursor-pointer shadow-sm border border-[#e8e0e0]';
+    }
+  };
+
+  const getSeatTooltip = (seat, status) => {
+    switch (status) {
+      case 'online':
+        return `${seat.playerName || '冒险者'} - 在岗`;
+      case 'offline':
+        return '该员工未到岗';
+      case 'slacking':
+        const activityName = HEAVY_ACTIVITY_NAMES[seat.activityStatus] || seat.activityStatus;
+        return `上班摸鱼中 - 正在${activityName}`;
+      default:
+        return `空床位 (${seat.position})`;
+    }
+  };
+
+  const getSeatBadge = (status) => {
+    if (status === 'slacking') return '🐟';
+    if (status === 'offline') return '💤';
+    return null;
   };
 
   const cooldownRemaining = Math.max(0, (player.seatCooldown || 0) - Math.floor(Date.now() / 1000));
@@ -84,18 +130,24 @@ function IdleHall({ playerId, player, seats, setSeats, setPlayer, playerRef }) {
         <NPCPeachBox />
         
         <div className="grid grid-cols-5 gap-4 max-w-md mx-auto mb-4">
-          {seats.map((seat) => (
-            <button
-              key={seat.seatId}
-              className={`aspect-square rounded-lg flex flex-col items-center justify-center transition-all ${getSeatClass(seat)}`}
-              onClick={() => !seat.playerId && handleSit(seat.seatId)}
-              disabled={!!seat.playerId || loading}
-              title={seat.playerId ? `冒险者: ${seat.playerName}` : `空床位 (${seat.position})`}
-            >
-              <span className="text-2xl">{getSeatEmoji(seat)}</span>
-              <span className={`text-xs mt-1 ${seat.playerId === playerId ? 'text-[#b76e79] font-medium' : 'text-[#6b5b5b]'}`}>{getSeatName(seat)}</span>
-            </button>
-          ))}
+          {seats.map((seat) => {
+            const status = getSeatStatus(seat);
+            return (
+              <button
+                key={seat.seatId}
+                className={`aspect-square rounded-lg flex flex-col items-center justify-center transition-all relative ${getSeatClass(seat, status)}`}
+                onClick={() => !seat.playerId && handleSit(seat.seatId)}
+                disabled={!!seat.playerId || loading}
+                title={getSeatTooltip(seat, status)}
+              >
+                <span className={`text-2xl ${status === 'offline' ? 'grayscale' : ''}`}>{getSeatEmoji(seat, status)}</span>
+                <span className={`text-xs mt-1 ${seat.playerId === playerId ? 'text-[#b76e79] font-medium' : 'text-[#6b5b5b]'}`}>{getSeatName(seat, status)}</span>
+                {getSeatBadge(status) && (
+                  <span className="absolute -top-1 -right-1 text-sm">{getSeatBadge(status)}</span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {message && (
