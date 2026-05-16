@@ -8,7 +8,7 @@ const DEFAULT_LIMITS = { ssr: 1, sr: 3, r: 5 };
 
 async function getGachaLimits() {
   try {
-    const rows = await db.all('SELECT rarity, limit FROM gacha_limits');
+    const rows = await db.all('SELECT rarity, "limit" FROM gacha_limits');
     const limits = { ...DEFAULT_LIMITS };
     rows.forEach(row => {
       limits[row.rarity.toLowerCase()] = row.limit;
