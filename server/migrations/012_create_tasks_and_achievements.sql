@@ -30,6 +30,9 @@ CREATE TABLE IF NOT EXISTS player_achievements (
   PRIMARY KEY ("playerId", "achievementId")
 );
 
+-- Add unique constraint to player_tasks for upsert logic
+ALTER TABLE player_tasks ADD CONSTRAINT IF NOT EXISTS unique_player_task UNIQUE ("playerId", "taskId");
+
 -- Insert initial achievements
 INSERT INTO achievements ("name", "description", "icon", "condition_field", "condition_value", "reward_money") VALUES
   ('仙人附体', '累计获得 10 次一等奖', '🎫', 'scratchTier1Count', 10, 100000),

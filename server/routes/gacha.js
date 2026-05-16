@@ -158,10 +158,10 @@ router.post('/pull', async (req, res) => {
     }
     
     // Deduct money and update counts
-    const newSsrCount = player.ssrCount + rarityCounts.ssr;
-    const newSrCount = player.srCount + rarityCounts.sr;
-    const newRCount = player.rCount + rarityCounts.r;
-    const newTotalGachaCount = player.totalGachaCount + results.length;
+    const newSsrCount = (player.ssrCount || 0) + rarityCounts.ssr;
+    const newSrCount = (player.srCount || 0) + rarityCounts.sr;
+    const newRCount = (player.rCount || 0) + rarityCounts.r;
+    const newTotalGachaCount = (player.totalGachaCount || 0) + results.length;
     const newMoney = player.money - cost;
 
     await client.query(

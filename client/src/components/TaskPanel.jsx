@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { taskApi } from '../api';
 
-function TaskPanel({ playerId, tasks, setTasks, onClose }) {
+function TaskPanel({ playerId, player, setPlayer, tasks, setTasks, onClose }) {
   const [activeTab, setActiveTab] = useState('daily'); // 'daily' or 'achievements'
   const [clockIn, setClockIn] = useState({ count: 0, daysInMonth: 30, clockedInToday: false });
   const [achievements, setAchievements] = useState([]);
@@ -40,6 +40,8 @@ function TaskPanel({ playerId, tasks, setTasks, onClose }) {
     try {
       const res = await taskApi.clockIn(playerId);
       setClockIn({ ...res.data, clockedInToday: true });
+      // Update local player state to reflect gold gain immediately
+      setPlayer(prev => ({ ...prev, money: prev.money + 50 }));
     } catch (err) {
       console.error('Clock-in failed:', err);
     } finally {

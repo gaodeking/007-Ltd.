@@ -384,6 +384,8 @@ function App() {
         {showTasks && (
           <TaskPanel 
             playerId={playerId}
+            player={player}
+            setPlayer={setPlayer}
             tasks={tasks}
             setTasks={setTasks}
             onClose={() => setShowTasks(false)}
