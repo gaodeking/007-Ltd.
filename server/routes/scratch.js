@@ -8,7 +8,7 @@ const PRIZES = {
   1: 400,   // 二等奖：2 同色
   0: 0,     // 未中奖：3 异色
 };
-const EMOJIS = ['', '🐸', '🐹'];
+const EMOJIS = ['🐱', '🐸', '🐹'];
 
 function generateGrid() {
   const grid = [];
@@ -22,15 +22,9 @@ function generateGrid() {
   return [grid.slice(0, 3), grid.slice(3, 6), grid.slice(6, 9)];
 }
 
-function calculateTier(revealedGrid) {
-  const revealed = [];
-  for (let r = 0; r < 3; r++) {
-    for (let c = 0; c < 3; c++) {
-      if (revealedGrid[r][c]) revealed.push(revealedGrid[r][c]);
-    }
-  }
+function calculateTier(revealedEmojis) {
   const counts = {};
-  revealed.forEach(e => counts[e] = (counts[e] || 0) + 1);
+  revealedEmojis.forEach(e => counts[e] = (counts[e] || 0) + 1);
   const maxCount = Math.max(...Object.values(counts));
   if (maxCount === 3) return 2;
   if (maxCount === 2) return 1;
@@ -134,7 +128,18 @@ router.post('/claim', async (req, res) => {
     }
     
     const ticket = p.currentScratchTicket;
-    const tier = calculateTier(ticket.revealed);
+    
+    // 提取已揭开的 emoji
+    const revealedEmojis = [];
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 3; c++) {
+        if (ticket.revealed[r][c]) {
+          revealedEmojis.push(ticket.grid[r][c]);
+        }
+      }
+    }
+    
+    const tier = calculateTier(revealedEmojis);
     const prize = PRIZES[tier];
     const netProfit = prize - SCRATCH_COST;
     
