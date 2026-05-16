@@ -126,7 +126,15 @@ router.post('/pull', async (req, res) => {
         return true;
       });
       
-      if (availableItems.length === 0) break; // No items available
+      if (availableItems.length === 0) {
+        // 所有有限物品已抽完，填充"谢谢参与"
+        const thanksItem = pool.items.find(item => item.id === 'thanks');
+        results.push({
+          item: thanksItem,
+          color: gachaConfig.rarityColors['n']
+        });
+        continue;
+      } // No items available
       
       // Weighted random
       const totalWeight = availableItems.reduce((sum, item) => sum + item.weight, 0);
