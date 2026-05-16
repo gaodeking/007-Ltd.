@@ -40,6 +40,11 @@ export const taskApi = {
   getTasks: (playerId) => api.get(`/tasks/${playerId}`),
   updateProgress: (playerId, type, value) => api.post('/tasks/progress', { playerId, type, value }),
   claim: (playerId, taskId) => api.post('/tasks/claim', { playerId, taskId }),
+  clockIn: (playerId) => api.post('/tasks/clock-in', { playerId }),
+  getClockIn: (playerId) => api.get(`/tasks/clock-in/${playerId}`),
+  getAchievements: (playerId) => api.get(`/tasks/achievements/${playerId}`),
+  checkAchievements: (playerId) => api.post(`/tasks/achievements/check/${playerId}`),
+  claimAchievement: (playerId, id) => api.post(`/tasks/achievements/claim/${playerId}/${id}`),
 };
 
 export const bugApi = {

@@ -143,10 +143,24 @@ router.post('/claim', async (req, res) => {
     const prize = PRIZES[tier];
     const netProfit = prize - SCRATCH_COST;
     
+    // Counters for achievements
+    const isTier1 = tier === 2 ? 1 : 0;
+    const isTier0 = tier === 0 ? 1 : 0;
+    
     await client.query(
-      'UPDATE players SET "currentScratchTicket" = NULL, "scratchEarnings" = "scratchEarnings" + $1, "money" = "money" + $2 WHERE id = $3',
-      [netProfit, prize, playerId]
+      'UPDATE players SET "currentScratchTicket" = NULL, "scratchEarnings" = "scratchEarnings" + $1, "money" = "money" + $2, "totalScratchCount" = "totalScratchCount" + 1, "scratchTier1Count" = "scratchTier1Count" + $3, "scratchTier0Count" = "scratchTier0Count" + $4 WHERE id = $5',
+      [netProfit, prize, isTier1, isTier0, playerId]
     );
+    
+    // Update daily task progress for scratch_count
+    const today = new Date().toISOString().split('T')[0];
+    await client.query(`
+      INSERT INTO player_tasks ("playerId", "taskId", "progress")
+      SELECT $1, dt."id", 1
+      FROM daily_tasks dt
+      WHERE dt."date" = $2 AND dt."type" = 'scratch_count'
+      ON CONFLICT ("playerId", "taskId") DO UPDATE SET "progress" = LEAST(player_tasks."progress" + 1, dt."target")
+    `, [playerId, today]);
     
     // 一等奖触发跨服播报
     if (tier === 2) {
