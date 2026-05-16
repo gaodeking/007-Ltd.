@@ -70,12 +70,14 @@ function IdleHall({ playerId, player, seats, setSeats, setPlayer, playerRef, act
   };
 
   const getSeatEmoji = (seat, status) => {
+    if (status === 'empty') return '🛏️';
     if (status === 'offline') return seat.playerAvatar || '🧙‍♂️';
     if (seat.playerId === playerId) return player.avatar || '🧙‍♂️';
     return seat.playerAvatar || '⚔️';
   };
 
   const getSeatName = (seat, status) => {
+    if (status === 'empty') return '空置工位';
     if (status === 'offline') return (seat.playerName || '冒险者').substring(0, 6);
     if (seat.playerId === playerId) return player.name?.substring(0, 6) || '我';
     return (seat.playerName || '冒险者').substring(0, 6);

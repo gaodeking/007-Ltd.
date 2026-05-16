@@ -19,19 +19,8 @@ router.get('/init', async (req, res) => {
       player = await db.get('SELECT * FROM players WHERE id = $1', [playerId]);
     }
 
-    // 检查并释放超时的旧座位
+    // 仅更新心跳，不再自动释放座位（座位仅在手动点击"起身离开"时释放）
     const now = Math.floor(Date.now() / 1000);
-    if (player.currentSeat && player.lastHeartbeat) {
-      const elapsed = now - player.lastHeartbeat;
-      if (elapsed > 120) {
-        // 心跳超时，释放旧座位
-        await db.run('UPDATE seats SET "playerId" = NULL WHERE "seatId" = $1', [player.currentSeat]);
-        await db.run('UPDATE players SET "currentSeat" = NULL WHERE id = $1', [playerId]);
-        player.currentSeat = null;
-      }
-    }
-
-    // 更新 lastHeartbeat，防止其他请求误判
     await db.run('UPDATE players SET "lastHeartbeat" = $1 WHERE id = $2', [now, playerId]);
 
     // 登录逻辑判断

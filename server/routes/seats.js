@@ -2,28 +2,12 @@
 const router = express.Router();
 const db = require('../models/db');
 
-const SEAT_TIMEOUT = 120;
 const FIRST_SIT_COOLDOWN = 2;
 const CHANGE_SEAT_COOLDOWN = 2;
 const LEAVE_SEAT_COOLDOWN = 2;
 
 router.get('/', async (req, res) => {
   try {
-    const now = Math.floor(Date.now() / 1000);
-    
-    const timeoutSeats = await db.all(`
-      SELECT s."seatId", s."playerId"
-      FROM seats s
-      JOIN players p ON s."playerId" = p.id
-      WHERE s."playerId" IS NOT NULL 
-        AND (p."lastHeartbeat" IS NULL OR p."lastHeartbeat" < $1)
-    `, [now - SEAT_TIMEOUT]);
-    
-    for (const seat of timeoutSeats) {
-      await db.run('UPDATE seats SET "playerId" = NULL WHERE "seatId" = $1', [seat.seatId]);
-      await db.run('UPDATE players SET "currentSeat" = NULL WHERE id = $1', [seat.playerId]);
-    }
-    
     const seats = await db.all(`
       SELECT s."seatId" as "seatId", s."playerId" as "playerId", s.bonus, s.position, 
              p.name as "playerName", p.avatar as "playerAvatar", 

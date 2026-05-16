@@ -161,19 +161,13 @@ function App() {
     return () => clearInterval(saveInterval);
   }, [playerId]);
 
-  // Save on page close (beforeunload) - save player data and leave seat
+  // Save on page close (beforeunload) - save player data only, do NOT release seat
   useEffect(() => {
     if (!playerId || !playerRef.current) return;
     const handleBeforeUnload = () => {
-      // 1. 保存玩家数据
+      // 仅保存玩家数据，不再释放座位（座位仅在手动点击"起身离开"时释放）
       const saveData = JSON.stringify(playerRef.current);
       navigator.sendBeacon(`/api/player/${playerId}/save`, new Blob([saveData], { type: 'application/json' }));
-      
-      // 2. 离开座位（强制释放，忽略 cooldown）
-      if (playerRef.current?.currentSeat) {
-        const leaveData = JSON.stringify({ playerId, force: true });
-        navigator.sendBeacon('/api/seats/leave', new Blob([leaveData], { type: 'application/json' }));
-      }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
