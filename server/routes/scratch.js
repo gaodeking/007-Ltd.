@@ -154,12 +154,28 @@ router.post('/claim', async (req, res) => {
     
     // Update daily task progress for scratch_count
     const today = new Date().toISOString().split('T')[0];
+    
+    // 1. Try to update existing progress
+    await client.query(`
+      UPDATE player_tasks pt
+      SET "progress" = LEAST(pt."progress" + 1, dt."target")
+      FROM daily_tasks dt
+      WHERE pt."taskId" = dt."id" 
+        AND pt."playerId" = $1 
+        AND dt."date" = $2 
+        AND dt."type" = 'scratch_count'
+    `, [playerId, today]);
+    
+    // 2. If no row updated (task not started), insert new record
     await client.query(`
       INSERT INTO player_tasks ("playerId", "taskId", "progress")
       SELECT $1, dt."id", 1
       FROM daily_tasks dt
       WHERE dt."date" = $2 AND dt."type" = 'scratch_count'
-      ON CONFLICT ("playerId", "taskId") DO UPDATE SET "progress" = LEAST(player_tasks."progress" + 1, dt."target")
+        AND NOT EXISTS (
+          SELECT 1 FROM player_tasks pt 
+          WHERE pt."playerId" = $1 AND pt."taskId" = dt."id"
+        )
     `, [playerId, today]);
     
     // 一等奖触发跨服播报
