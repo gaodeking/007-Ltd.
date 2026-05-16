@@ -528,4 +528,13 @@
 ### 4. 数据库管理
 *   **生产数据库**：Supabase Project `jiaban007` (ID: `cxahyurmtcsrifiqoyez`)
 *   **测试数据库**：Supabase Project `jiaban007-test` (ID: `chdwnashqoxybcbipthk`)
-*   **⚠️ 警告**：在进行数据库结构变更（如 `ALTER TABLE`）时，务必先在测试库执行，验证无误后，**必须**在生产库同步执行，否则会导致上线后代码报错。
+*   **自动化迁移**：
+    *   项目已引入 `node-pg-migrate` 工具，所有数据库结构变更必须通过迁移脚本管理。
+    *   迁移脚本存放在 `server/migrations/` 目录下。
+    *   **部署时自动执行**：Render 的 `startCommand` 已配置为 `npm run migrate && node server.js`，确保每次部署自动同步数据库结构。
+    *   **开发流程**：
+        1.  运行 `npm run migrate:create <description>` 生成新的 SQL 文件。
+        2.  在生成的文件中编写 `ALTER TABLE` 或 `CREATE TABLE` 语句。
+        3.  提交代码（包含 SQL 文件）。
+        4.  合并到 `main` 或 `develop` 后，对应环境部署时会自动执行。
+    *   **️ 警告**：严禁手动在 Supabase 控制台执行结构变更 SQL，必须通过迁移脚本提交，否则会导致分支间数据库不一致。
