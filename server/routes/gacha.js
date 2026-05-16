@@ -31,13 +31,13 @@ router.get('/pool', async (req, res) => {
     const stockMap = {};
     stocks.forEach(s => stockMap[s.prizeId] = s);
     
-    // Get personal counts
-    const personalCounts = await db.all(
-      'SELECT "rarity", COUNT(*) as count FROM gacha_log WHERE "playerId" = $1 GROUP BY "rarity"',
-      [playerId]
-    );
-    const countMap = {};
-    personalCounts.forEach(c => countMap[c.rarity] = parseInt(c.count));
+    // Get personal counts directly from players table for consistency and performance
+    const player = await db.get('SELECT "ssrCount", "srCount", "rCount" FROM players WHERE id = $1', [playerId]);
+    const countMap = {
+      ssr: player?.ssrCount || 0,
+      sr: player?.srCount || 0,
+      r: player?.rCount || 0
+    };
     
     // Assemble response
     const itemsWithStock = pool.items.map(item => {
