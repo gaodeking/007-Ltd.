@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS achievements (
   "icon" TEXT NOT NULL,
   "condition_field" TEXT NOT NULL,
   "condition_value" INTEGER NOT NULL,
-  "reward_money" INTEGER NOT NULL
+  "reward_money" INTEGER NOT NULL,
+  CONSTRAINT unique_achievement_field UNIQUE ("condition_field")
 );
 
 -- Create player achievements progress table
