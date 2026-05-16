@@ -16,8 +16,15 @@ function GachaModal({ playerId, player, setPlayer, onClose }) {
 
   const handlePull = async (count) => {
     const cost = count === 10 ? 6480 : 720 * count;
-    if (animating || player.money < cost) return;
+    if (animating || player.money < cost) {
+      if (player.money < cost) {
+        alert('金币不足！');
+      }
+      return;
+    }
     
+    // 原子性：先关闭旧弹窗，确保状态完全重置
+    setShowResult(false);
     setAnimating(true);
     setPullCount(count);
     
@@ -29,12 +36,15 @@ function GachaModal({ playerId, player, setPlayer, onClose }) {
         ...prev,
         money: prev.money - cost
       }));
-      setShowResult(true);
+      // 防御性：延迟显示新结果，确保 React 完成旧组件卸载，触发动画重播
+      setTimeout(() => setShowResult(true), 50);
       // Refresh pool to update stock and personal counts
       const poolRes = await gachaApi.getPool();
       setPool(poolRes.data);
     } catch (err) {
       console.error('Pull failed:', err);
+      const errorMsg = err.response?.data?.error || '抽奖失败，请重试';
+      alert(errorMsg);
     } finally {
       setAnimating(false);
     }

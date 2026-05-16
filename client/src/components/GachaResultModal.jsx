@@ -64,6 +64,9 @@ function GachaResultModal({ results, pullCount, playerMoney, onClose, onPullAgai
     rarityOrder[item.item.rarity] > rarityOrder[max.item.rarity] ? item : max
   , results[0]);
 
+  const cost = pullCount === 10 ? 6480 : 720 * pullCount;
+  const canAffordAgain = playerMoney >= cost;
+
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
       <div className="bg-[#fffbeb] rounded-2xl border-4 border-[#f59e0b]/30 max-w-3xl w-full shadow-2xl overflow-hidden">
@@ -94,7 +97,13 @@ function GachaResultModal({ results, pullCount, playerMoney, onClose, onPullAgai
           <div className="flex gap-3">
             <button
               onClick={onPullAgain}
-              className="px-6 py-2 bg-[#f97316] hover:bg-[#ea580c] text-white rounded-lg font-bold shadow-md transition-colors flex items-center gap-2"
+              disabled={!canAffordAgain}
+              className={`px-6 py-2 rounded-lg font-bold shadow-md transition-colors flex items-center gap-2 ${
+                canAffordAgain 
+                  ? 'bg-[#f97316] hover:bg-[#ea580c] text-white' 
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+              title={!canAffordAgain ? '金币不足' : ''}
             >
               🔄 再来一次
             </button>
