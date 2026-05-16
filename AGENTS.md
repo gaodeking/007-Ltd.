@@ -3,31 +3,57 @@
 ## 版本历史
 
 ### v0.1.2 (Develop)
-**主题：动态抽奖上限配置 + 跨服中奖播报**
+**主题：仙人彩玩法 + 成就系统 + 座位状态重构**
 
 #### 本次会话完成的改动
 
-**1. 动态抽奖上限系统**
-- **数据库**：新建 `gacha_limits` 表（字段：`rarity`, `limit`），支持后台随时修改各稀有度个人抽取上限。
-- **后端**：修改 `server/routes/gacha.js`
-  - 新增 `getGachaLimits()` 函数，优先从数据库读取配置。
-  - 增加兜底逻辑：若数据库读取失败，自动降级使用代码默认值。
-  - 移除硬编码的 `gachaConfig.personalLimits` 引用。
-- **安全约束**：数据库表添加 `CHECK ("limit" >= 0)` 约束，防止非法负数输入。
-- **默认值调整**：SSR 上限调整为 1，SR 上限 3，R 上限 5。
-- **并发修复**：引入数据库事务与行级锁 (`FOR UPDATE`)，彻底解决并发抽奖突破限制的问题。
+**1. 金蝶游乐场 - 仙人彩玩法**
+- **数据库**：
+  - 新增 `players` 字段：`scratchEarnings` (累计净收益), `currentScratchTicket` (当前票据状态), `scratchTier1Count`, `scratchTier0Count`, `totalScratchCount`。
+- **后端**：新建 `server/routes/scratch.js`
+  - 实现购票 (`/buy`)、揭开 (`/reveal`)、结算 (`/claim`) 接口。
+  - 结算逻辑：根据翻开的 3 个 Emoji 判定奖项（一等奖 5000，二等奖 400，未中奖 0）。
+  - 一等奖自动触发跨服播报。
+  - 每日任务进度自动更新（`scratch_count` 类型）。
+- **前端**：
+  - 新建 `ScratchModal.jsx`：包含规则介绍、购票、收益查看入口。
+  - 新建 `ScratchCardGame.jsx`：3x3 网格刮奖界面。
+  - 新建 `ScratchResultModal.jsx`：结果展示与"再刮一张"交互。
+  - 新建 `ScratchEarningsModal.jsx`：累计收益展示。
+  - 改造 `ArcadePanel.jsx`：改为按钮入口，点击弹出仙人彩界面。
 
-**2. 跨服中奖播报系统**
-- **数据库**：新建 `broadcast_messages` 表（字段：`id`, `content`, `rarity`, `created_at`）。
+**2. 成就系统与每日任务升级**
+- **数据库**：
+  - 新建 `player_clock_ins` 表：记录每月打卡次数。
+  - 新建 `achievements` 表：成就定义（名称、条件字段、目标值、奖励）。
+  - 新建 `player_achievements` 表：玩家解锁与领取状态。
+- **后端**：扩展 `server/routes/tasks.js`
+  - 新增打卡接口 (`/clock-in`)：每日打卡奖励 50 金币。
+  - 新增成就查询与检查接口 (`/achievements`, `/achievements/check`)。
+  - 新增成就领取接口 (`/achievements/claim`)。
+- **前端**：重构 `TaskPanel.jsx`
+  - 改为双 Tab 布局：[每日任务] / [成就]。
+  - 每日任务页：新增打卡按钮与本月打卡进度显示。
+  - 成就页：展示成就列表、进度条、解锁状态与领取按钮。
+
+**3. 座位状态系统重构**
+- **数据库**：
+  - 新增 `players.activityStatus` 字段。
+  - 新建 `heavy_activities` 表：配置重度活动（如仙人彩）。
 - **后端**：
-  - 修改 `server/routes/gacha.js`：抽奖成功后自动向广播表插入 SSR/SR/R 中奖记录。
-  - 新建 `server/routes/broadcast.js`：实现 `GET /api/broadcast` 接口，返回最新 5 条消息。
-  - 自动清理：每次插入后自动删除 50 条之前的旧记录，防止数据膨胀。
-- **前端**：重构 `client/src/components/ChatSidebar.jsx`
-  - 移除占位符，改为实时消息列表。
-  - 实现 3 秒轮询机制，自动获取最新消息。
-  - 样式区分：SSR (金色/加粗), SR (紫色), R (蓝色)。
-  - 交互：标准聊天模式，新消息自动滚动到底部。
+  - 修改 `server/routes/player.js`：`/heartbeat` 支持携带 `activityStatus`。
+  - 修改 `server/routes/seats.js`：移除超时自动释放座位逻辑，改为仅更新心跳。
+  - 新建 `server/routes/activity.js`：活动状态设置/清除接口。
+- **前端**：
+  - 修改 `IdleHall.jsx`：实现三种状态 UI（在岗/离线/摸鱼）。
+  - 修改 `App.jsx`：状态管理与心跳逻辑同步。
+  - 移除 `beforeunload` 中的强制离座逻辑，改为仅保存数据。
+
+**4. 问题修复**
+- **抽奖计数 Bug**：修复 `gacha.js` 中漏选 `totalGachaCount` 导致计数器重置的问题。
+- **挂机时长 Bug**：修复 `db.js` 中字段名大小写不一致导致 `totalIdleTime` 累加失败的问题。
+- **仙人彩结算 Bug**：修复 `scratch.js` 中 SQL 语法错误导致的结算卡死。
+- **成就重复 Bug**：为 `achievements` 表添加唯一约束，防止数据重复插入。
 
 ---
 
