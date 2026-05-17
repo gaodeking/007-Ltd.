@@ -11,10 +11,20 @@ function TaskPanel({ playerId, player, setPlayer, tasks, setTasks, onClose }) {
   useEffect(() => {
     if (activeTab === 'daily') {
       loadClockIn();
+      loadTasks(); // Load tasks when daily tab is active
     } else {
       loadAchievements();
     }
   }, [activeTab]);
+
+  const loadTasks = async () => {
+    try {
+      const res = await taskApi.getTasks(playerId);
+      setTasks(res.data);
+    } catch (err) {
+      console.error('Failed to load tasks:', err);
+    }
+  };
 
   const loadClockIn = async () => {
     try {
@@ -53,9 +63,11 @@ function TaskPanel({ playerId, player, setPlayer, tasks, setTasks, onClose }) {
     setClaiming(taskId);
     try {
       await taskApi.claim(playerId, taskId);
-      setTasks(prev => prev.map(t => t.id === taskId ? { ...t, claimed: 1 } : t));
+      // Refresh task list to get latest state from server
+      await loadTasks();
     } catch (err) {
-      console.error('Claim failed:', err);
+      const errorMsg = err.response?.data?.error || '领取失败，请重试';
+      alert(errorMsg);
     } finally {
       setClaiming(null);
     }
