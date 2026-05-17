@@ -1,6 +1,7 @@
 ﻿const express = require('express');
 const router = express.Router();
 const db = require('../models/db');
+const { updateTaskProgress } = require('./tasks');
 
 const FIRST_SIT_COOLDOWN = 2;
 const CHANGE_SEAT_COOLDOWN = 2;
@@ -91,6 +92,11 @@ router.post('/:seatId/sit', async (req, res) => {
         'UPDATE players SET "currentSeat" = $1, "seatCooldown" = $2, "lastHeartbeat" = $3 WHERE id = $4',
         [seatId, now + cooldownDuration, now, playerId]
       );
+    }
+
+    // Update daily task progress for seat_change (only if changing seats, not first sit)
+    if (!isFirstSit) {
+      await updateTaskProgress(playerId, 'seat_change', 1, client);
     }
 
     await client.query('COMMIT');

@@ -241,4 +241,70 @@ router.post('/achievements/claim/:playerId/:id', async (req, res) => {
   }
 });
 
+// --- Shared Task Progress Logic ---
+
+async function updateTaskProgress(playerId, type, value, client = null) {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Helper to run query with or without transaction client
+    const runQuery = async (query, params) => {
+      if (client) {
+        return client.query(query, params);
+      } else {
+        return db.run(query, params); // db.run returns { changes }
+      }
+    };
+    
+    const getQuery = async (query, params) => {
+      if (client) {
+        const res = await client.query(query, params);
+        return res.rows[0] || null;
+      } else {
+        return db.get(query, params);
+      }
+    };
+
+    const allQuery = async (query, params) => {
+      if (client) {
+        const res = await client.query(query, params);
+        return res.rows;
+      } else {
+        return db.all(query, params);
+      }
+    };
+
+    const tasks = await allQuery(
+      'SELECT "id", "date", "description", "target", "reward", "type" FROM daily_tasks WHERE "date" = $1 AND "type" = $2', 
+      [today, type]
+    );
+
+    for (const task of tasks) {
+      const playerTask = await getQuery(
+        'SELECT * FROM player_tasks WHERE "playerId" = $1 AND "taskId" = $2',
+        [playerId, task.id]
+      );
+
+      if (playerTask && playerTask.claimed) continue;
+
+      if (playerTask) {
+        const newProgress = Math.min(playerTask.progress + value, task.target);
+        await runQuery(
+          'UPDATE player_tasks SET "progress" = $1 WHERE "id" = $2',
+          [newProgress, playerTask.id]
+        );
+      } else {
+        const newProgress = Math.min(value, task.target);
+        await runQuery(
+          'INSERT INTO player_tasks ("playerId", "taskId", "progress") VALUES ($1, $2, $3)',
+          [playerId, task.id, newProgress]
+        );
+      }
+    }
+  } catch (err) {
+    console.error(`Error updating task progress for type ${type}:`, err);
+  }
+}
+
 module.exports = router;
+module.exports.updateTaskProgress = updateTaskProgress;

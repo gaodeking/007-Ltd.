@@ -2,6 +2,7 @@
 const router = express.Router();
 const db = require('../models/db');
 const gachaConfig = require('../config/gacha.json');
+const { updateTaskProgress } = require('./tasks');
 
 // Default limits fallback (Updated: SSR:1, SR:3, R:5)
 const DEFAULT_LIMITS = { ssr: 1, sr: 3, r: 5 };
@@ -184,6 +185,9 @@ router.post('/pull', async (req, res) => {
         [deduct, prizeId]
       );
     }
+    
+    // Update daily task progress for gacha_count
+    await updateTaskProgress(playerId, 'gacha_count', count, client);
     
     // Record gacha logs
     for (const result of results) {

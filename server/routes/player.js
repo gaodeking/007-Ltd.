@@ -2,6 +2,7 @@
 const router = express.Router();
 const db = require('../models/db');
 const { v4: uuidv4 } = require('uuid');
+const { updateTaskProgress } = require('./tasks');
 
 router.get('/init', async (req, res) => {
   try {
@@ -182,6 +183,13 @@ router.post('/:id/save', async (req, res) => {
         "totalMoneyEarned" = $7, "totalGachaCount" = $8, "lastSave" = EXTRACT(EPOCH FROM NOW())::INTEGER
       WHERE id = $9
     `, [finalMoney, safeIdleRate, safeBonus, safeCurrentSeat, Number(seatCooldown) || 0, finalTotalIdleTime, finalTotalMoneyEarned, Number(totalGachaCount) || 0, req.params.id]);
+    
+    // Update daily task progress
+    // Only update if player is seated and earned something
+    if (player.currentSeat && effectiveElapsed > 0) {
+      await updateTaskProgress(req.params.id, 'idle_time', effectiveElapsed);
+      await updateTaskProgress(req.params.id, 'money_earned', backendEarnings);
+    }
     
     res.json({ success: true, backendEarnings, money: finalMoney, totalMoneyEarned: finalTotalMoneyEarned, totalIdleTime: finalTotalIdleTime });
   } catch (err) {
