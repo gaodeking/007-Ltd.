@@ -144,7 +144,8 @@ function App() {
           setPlayer(prev => ({
             ...prev,
             money: res.data.money,
-            totalMoneyEarned: res.data.totalMoneyEarned
+            totalMoneyEarned: res.data.totalMoneyEarned,
+            totalIdleTime: res.data.totalIdleTime
           }));
         }
       } catch (err) {

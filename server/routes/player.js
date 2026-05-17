@@ -126,8 +126,21 @@ router.post('/:id/save', async (req, res) => {
     const safeBonus = Number.isNaN(Number(bonus)) ? 1.0 : Number(bonus);
     
     let backendEarnings = 0;
-    if (player.currentSeat && elapsed > 0) {
+    let effectiveElapsed = 0;
+    
+    // 心跳验证：判定玩家是否在线（60秒无心跳视为离线）
+    const heartbeatThreshold = 60;
+    const isOffline = !player.lastHeartbeat || (now - player.lastHeartbeat > heartbeatThreshold);
+    
+    if (!isOffline && player.currentSeat && elapsed > 0) {
+      // 在线且有座位：正常计算收益
       backendEarnings = Math.floor(elapsed * safeIdleRate * safeBonus);
+      effectiveElapsed = elapsed;
+    } else if (isOffline) {
+      // 离线：无收益，不计入在线时长
+      backendEarnings = 0;
+      effectiveElapsed = 0;
+      console.log(`[OFFLINE] Player ${req.params.id} detected offline (lastHeartbeat: ${player.lastHeartbeat}, now: ${now})`);
     }
 
     // 异常收益监控：如果单次结算超过 10000 金币，记录警告日志
@@ -157,7 +170,7 @@ router.post('/:id/save', async (req, res) => {
       finalTotalMoneyEarned = (Number(totalMoneyEarned) || 0) + backendEarnings;
     }
     
-    const finalTotalIdleTime = (Number(totalIdleTime) || 0) + elapsed;
+    const finalTotalIdleTime = (Number(player.totalIdleTime) || 0) + effectiveElapsed;
     
     // 3. currentSeat：显式检查 NaN，防止字符串 ID 被误转，同时拦截 NaN
     const safeCurrentSeat = Number.isNaN(Number(currentSeat)) ? null : currentSeat;
@@ -170,7 +183,7 @@ router.post('/:id/save', async (req, res) => {
       WHERE id = $9
     `, [finalMoney, safeIdleRate, safeBonus, safeCurrentSeat, Number(seatCooldown) || 0, finalTotalIdleTime, finalTotalMoneyEarned, Number(totalGachaCount) || 0, req.params.id]);
     
-    res.json({ success: true, backendEarnings, money: finalMoney, totalMoneyEarned: finalTotalMoneyEarned });
+    res.json({ success: true, backendEarnings, money: finalMoney, totalMoneyEarned: finalTotalMoneyEarned, totalIdleTime: finalTotalIdleTime });
   } catch (err) {
     console.error('Error in /save:', err);
     res.status(500).json({ error: 'Internal server error' });
