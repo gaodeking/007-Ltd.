@@ -79,6 +79,7 @@ router.post('/claim', async (req, res) => {
 
     res.json({ success: true, reward });
   } catch (err) {
+    console.error('Task claim error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
