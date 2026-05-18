@@ -92,9 +92,9 @@ function ProfileModal({ player, onClose, onUpdateName, onUpdateAvatar }) {
               <h3 className="font-semibold mb-2 text-[#4a3a3a]"> 冒险者信息</h3>
               <div className="space-y-1 text-sm text-[#6b5b5b]">
                 <div>等级: 1</div>
-                <div>总挂机时长: {formatTime(player.totalIdleTime)}</div>
-                <div>累计金币: {player.totalMoneyEarned.toLocaleString()}</div>
-                <div>抽奖次数: {player.totalgachacount || player.totalGachaCount || 0}</div>
+                <div>总挂机时长: {formatTime(player.totalidletime || 0)}</div>
+                <div>累计金币: {(player.totalmoneyearned || 0).toLocaleString()}</div>
+                <div>抽奖次数: {player.totalgachacount || 0}</div>
                 <div>成就: 0/50</div>
               </div>
             </div>

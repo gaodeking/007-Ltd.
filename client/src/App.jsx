@@ -144,8 +144,9 @@ function App() {
           setPlayer(prev => ({
             ...prev,
             money: res.data.money,
-            totalMoneyEarned: res.data.totalMoneyEarned,
-            totalIdleTime: res.data.totalIdleTime
+            totalmoneyearned: res.data.totalmoneyearned,
+            totalidletime: res.data.totalidletime,
+            totalgachacount: res.data.totalgachacount
           }));
         }
       } catch (err) {
@@ -206,7 +207,7 @@ function App() {
       setPlayer(prev => ({
         ...prev,
         money: prev.money + earningsPerTick,
-        totalMoneyEarned: prev.totalMoneyEarned + earningsPerTick
+        totalmoneyearned: prev.totalmoneyearned + earningsPerTick
       }));
       setEarnings(earningsPerTick);
       setEarnTrigger(prev => prev + 1);

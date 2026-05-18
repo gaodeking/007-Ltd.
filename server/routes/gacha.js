@@ -180,10 +180,11 @@ router.post('/pull', async (req, res) => {
     // Debug logging for count calculation
     console.log('[GACHA DEBUG] Calculated newTotalGachaCount:', newTotalGachaCount, '(old:', player.totalgachacount, '+ results:', results.length, ')');
 
-    await client.query(
+    const updateResult = await client.query(
       'UPDATE players SET "money" = $1, "totalgachacount" = $2, "ssrcount" = $3, "srcount" = $4, "rcount" = $5 WHERE id = $6',
       [newMoney, newTotalGachaCount, newSsrCount, newSrCount, newRCount, playerId]
     );
+    console.log('[GACHA DEBUG] UPDATE result - rows affected:', updateResult.rowCount);
     
     // Update stock
     for (const [prizeId, deduct] of Object.entries(stockUpdates)) {
@@ -236,6 +237,7 @@ router.post('/pull', async (req, res) => {
     
     // Commit Transaction
     await client.query('COMMIT');
+    console.log('[GACHA DEBUG] Transaction committed successfully for playerId:', playerId);
     
     res.json({
       results,
