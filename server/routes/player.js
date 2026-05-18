@@ -191,7 +191,7 @@ router.post('/:id/save', async (req, res) => {
       await updateTaskProgress(req.params.id, 'money_earned', backendEarnings);
     }
     
-    res.json({ success: true, backendEarnings, money: finalMoney, totalmoneyearned: finalTotalMoneyEarned, totalidletime: finalTotalIdleTime });
+    res.json({ success: true, backendEarnings, money: finalMoney, totalmoneyearned: finalTotalMoneyEarned, totalidletime: finalTotalIdleTime, totalgachacount: Number(totalgachacount) || 0 });
   } catch (err) {
     console.error('Error in /save:', err);
     res.status(500).json({ error: 'Internal server error' });
