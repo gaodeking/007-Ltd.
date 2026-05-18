@@ -174,7 +174,7 @@ router.get('/achievements/:playerId', async (req, res) => {
     const player = await db.get('SELECT * FROM players WHERE id = $1', [req.params.playerId]);
 
     const result = achievements.map(a => {
-      const currentValue = player[a.condition_field] || 0;
+      const currentValue = player[a.condition_field.toLowerCase()] || 0;
       const isUnlocked = currentValue >= a.condition_value;
       const playerStatus = playerMap[a.id];
       
@@ -202,7 +202,7 @@ router.post('/achievements/check/:playerId', async (req, res) => {
     let unlockedCount = 0;
     for (const a of achievements) {
       if (!existingMap.has(a.id)) {
-        const currentValue = player[a.condition_field] || 0;
+        const currentValue = player[a.condition_field.toLowerCase()] || 0;
         if (currentValue >= a.condition_value) {
           await db.run(
             'INSERT INTO player_achievements ("playerId", "achievementId") VALUES ($1, $2)',
