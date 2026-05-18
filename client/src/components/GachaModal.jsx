@@ -34,7 +34,8 @@ function GachaModal({ playerId, player, setPlayer, onClose }) {
       setPullSession(s => s + 1);
       setPlayer(prev => ({
         ...prev,
-        money: prev.money - cost
+        money: prev.money - cost,
+        totalgachacount: (prev.totalgachacount || 0) + count
       }));
       // 防御性：延迟显示新结果，确保 React 完成旧组件卸载，触发动画重播
       setTimeout(() => setShowResult(true), 50);
