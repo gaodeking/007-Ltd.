@@ -60,9 +60,9 @@ router.get('/init', async (req, res) => {
       bonus: player.bonus,
       currentSeat: player.currentSeat,
       seatCooldown: player.seatCooldown,
-      totalIdleTime: player.totalIdleTime,
-      totalMoneyEarned: player.totalMoneyEarned,
-      totalGachaCount: player.totalGachaCount,
+      totalidletime: player.totalidletime,
+      totalmoneyearned: player.totalmoneyearned,
+      totalgachacount: player.totalgachacount,
       lastSave: player.lastSave,
       activityStatus: player.activityStatus || null,
       createdAt: player.createdAt,
@@ -79,7 +79,7 @@ router.get('/init', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const player = await db.get('SELECT "id", "name", "avatar", "money", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [req.params.id]);
+    const player = await db.get('SELECT "id", "name", "avatar", "money", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalidletime", "totalmoneyearned", "totalgachacount", "lastSave", "createdAt" FROM players WHERE id = $1', [req.params.id]);
     if (!player) return res.status(404).json({ error: 'Player not found' });
     res.json(player);
   } catch (err) {
@@ -119,7 +119,7 @@ router.post('/:id/save', async (req, res) => {
     const now = Math.floor(Date.now() / 1000);
     const elapsed = now - (player.lastSave || now);
     
-    const { money, idleRate, bonus, currentSeat, seatCooldown, totalIdleTime, totalMoneyEarned, totalGachaCount } = req.body;
+    const { money, idleRate, bonus, currentSeat, seatCooldown, totalidletime, totalmoneyearned, totalgachacount } = req.body;
     
     // 严格防御性编程：拦截 NaN、null、undefined 及非法类型，确保数据库写入安全
     // 1. idleRate 和 bonus：使用 Number.isNaN 检查，保留合法的 0 值
@@ -164,14 +164,14 @@ router.post('/:id/save', async (req, res) => {
       // 校验失败：前端值偏差过大，强制使用后端计算值
       console.warn(`⚠️ [MONEY MISMATCH] Player ${req.params.id}: FrontendDiff=${frontendMoneyDiff}, BackendDiff=${expectedDiff}, Tolerance=${tolerance}`);
       finalMoney = dbMoney + backendEarnings;
-      finalTotalMoneyEarned = (Number(player.totalMoneyEarned) || 0) + backendEarnings;
+      finalTotalMoneyEarned = (Number(player.totalmoneyearned) || 0) + backendEarnings;
     } else {
       // 校验通过：信任前端累加值，但仍加上后端计算的增量（防止前端漏加）
       finalMoney = frontendMoney + backendEarnings;
-      finalTotalMoneyEarned = (Number(totalMoneyEarned) || 0) + backendEarnings;
+      finalTotalMoneyEarned = (Number(totalmoneyearned) || 0) + backendEarnings;
     }
     
-    const finalTotalIdleTime = (Number(player.totalIdleTime) || 0) + effectiveElapsed;
+    const finalTotalIdleTime = (Number(player.totalidletime) || 0) + effectiveElapsed;
     
     // 3. currentSeat：显式检查 NaN，防止字符串 ID 被误转，同时拦截 NaN
     const safeCurrentSeat = Number.isNaN(Number(currentSeat)) ? null : currentSeat;
@@ -179,10 +179,10 @@ router.post('/:id/save', async (req, res) => {
     await db.run(`
       UPDATE players SET
         "money" = $1, "idleRate" = $2, "bonus" = $3,
-        "currentSeat" = $4, "seatCooldown" = $5, "totalIdleTime" = $6,
-        "totalMoneyEarned" = $7, "totalGachaCount" = $8, "lastSave" = EXTRACT(EPOCH FROM NOW())::INTEGER
+        "currentSeat" = $4, "seatCooldown" = $5, "totalidletime" = $6,
+        "totalmoneyearned" = $7, "totalgachacount" = $8, "lastSave" = EXTRACT(EPOCH FROM NOW())::INTEGER
       WHERE id = $9
-    `, [finalMoney, safeIdleRate, safeBonus, safeCurrentSeat, Number(seatCooldown) || 0, finalTotalIdleTime, finalTotalMoneyEarned, Number(totalGachaCount) || 0, req.params.id]);
+    `, [finalMoney, safeIdleRate, safeBonus, safeCurrentSeat, Number(seatCooldown) || 0, finalTotalIdleTime, finalTotalMoneyEarned, Number(totalgachacount) || 0, req.params.id]);
     
     // Update daily task progress
     // Only update if player is seated and earned something
@@ -191,7 +191,7 @@ router.post('/:id/save', async (req, res) => {
       await updateTaskProgress(req.params.id, 'money_earned', backendEarnings);
     }
     
-    res.json({ success: true, backendEarnings, money: finalMoney, totalMoneyEarned: finalTotalMoneyEarned, totalIdleTime: finalTotalIdleTime });
+    res.json({ success: true, backendEarnings, money: finalMoney, totalmoneyearned: finalTotalMoneyEarned, totalidletime: finalTotalIdleTime });
   } catch (err) {
     console.error('Error in /save:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -200,7 +200,7 @@ router.post('/:id/save', async (req, res) => {
 
 router.get('/:id/offline-earnings', async (req, res) => {
   try {
-    const player = await db.get('SELECT "id", "name", "avatar", "money", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [req.params.id]);
+    const player = await db.get('SELECT "id", "name", "avatar", "money", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalidletime", "totalmoneyearned", "totalgachacount", "lastSave", "createdAt" FROM players WHERE id = $1', [req.params.id]);
     if (!player) return res.status(404).json({ error: 'Player not found' });
 
     const now = Math.floor(Date.now() / 1000);
@@ -222,7 +222,7 @@ router.get('/:id/offline-earnings', async (req, res) => {
 
 router.post('/:id/claim-offline', async (req, res) => {
   try {
-    const player = await db.get('SELECT "id", "name", "avatar", "money", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt" FROM players WHERE id = $1', [req.params.id]);
+    const player = await db.get('SELECT "id", "name", "avatar", "money", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalidletime", "totalmoneyearned", "totalgachacount", "lastSave", "createdAt" FROM players WHERE id = $1', [req.params.id]);
     if (!player) return res.status(404).json({ error: 'Player not found' });
 
     const now = Math.floor(Date.now() / 1000);
@@ -232,7 +232,7 @@ router.post('/:id/claim-offline', async (req, res) => {
     const earnings = Math.floor(effectiveSeconds * player.idleRate * player.bonus);
 
     if (earnings > 0) {
-      await db.run('UPDATE players SET "money" = "money" + $1, "totalMoneyEarned" = "totalMoneyEarned" + $1, "lastSave" = $2 WHERE id = $3',
+      await db.run('UPDATE players SET "money" = "money" + $1, "totalmoneyearned" = "totalmoneyearned" + $1, "lastSave" = $2 WHERE id = $3',
         [earnings, now, req.params.id]);
     }
 

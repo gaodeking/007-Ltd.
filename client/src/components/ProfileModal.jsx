@@ -94,7 +94,7 @@ function ProfileModal({ player, onClose, onUpdateName, onUpdateAvatar }) {
                 <div>等级: 1</div>
                 <div>总挂机时长: {formatTime(player.totalIdleTime)}</div>
                 <div>累计金币: {player.totalMoneyEarned.toLocaleString()}</div>
-                <div>抽奖次数: {player.totalGachaCount}</div>
+                <div>抽奖次数: {player.totalgachacount || player.totalGachaCount || 0}</div>
                 <div>成就: 0/50</div>
               </div>
             </div>

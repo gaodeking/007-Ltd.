@@ -33,11 +33,11 @@ router.get('/pool', async (req, res) => {
     stocks.forEach(s => stockMap[s.prizeId] = s);
     
     // Get personal counts directly from players table for consistency and performance
-    const player = await db.get('SELECT "ssrCount", "srCount", "rCount" FROM players WHERE id = $1', [playerId]);
+    const player = await db.get('SELECT "ssrcount", "srcount", "rcount" FROM players WHERE id = $1', [playerId]);
     const countMap = {
-      ssr: player?.ssrCount || 0,
-      sr: player?.srCount || 0,
-      r: player?.rCount || 0
+      ssr: player?.ssrcount || 0,
+      sr: player?.srcount || 0,
+      r: player?.rcount || 0
     };
     
     // Assemble response
@@ -76,7 +76,7 @@ router.post('/pull', async (req, res) => {
 
     // Lock player row to prevent race conditions
     const playerRes = await client.query(
-      'SELECT *, "totalGachaCount" FROM players WHERE id = $1 FOR UPDATE', 
+      'SELECT *, "totalgachacount" FROM players WHERE id = $1 FOR UPDATE', 
       [playerId]
     );
     const player = playerRes.rows[0];
@@ -104,9 +104,9 @@ router.post('/pull', async (req, res) => {
     
     // Use player counts directly (they are locked and consistent within transaction)
     const currentCounts = {
-      ssr: player.ssrCount || 0,
-      sr: player.srCount || 0,
-      r: player.rCount || 0
+      ssr: player.ssrcount || 0,
+      sr: player.srcount || 0,
+      r: player.rcount || 0
     };
 
     const results = [];
@@ -167,14 +167,14 @@ router.post('/pull', async (req, res) => {
     }
     
     // Deduct money and update counts
-    const newSsrCount = (player.ssrCount || 0) + rarityCounts.ssr;
-    const newSrCount = (player.srCount || 0) + rarityCounts.sr;
-    const newRCount = (player.rCount || 0) + rarityCounts.r;
-    const newTotalGachaCount = (player.totalGachaCount || 0) + results.length;
+    const newSsrCount = (player.ssrcount || 0) + rarityCounts.ssr;
+    const newSrCount = (player.srcount || 0) + rarityCounts.sr;
+    const newRCount = (player.rcount || 0) + rarityCounts.r;
+    const newTotalGachaCount = (player.totalgachacount || 0) + results.length;
     const newMoney = player.money - cost;
 
     await client.query(
-      'UPDATE players SET "money" = $1, "totalGachaCount" = $2, "ssrCount" = $3, "srCount" = $4, "rCount" = $5 WHERE id = $6',
+      'UPDATE players SET "money" = $1, "totalgachacount" = $2, "ssrcount" = $3, "srcount" = $4, "rcount" = $5 WHERE id = $6',
       [newMoney, newTotalGachaCount, newSsrCount, newSrCount, newRCount, playerId]
     );
     

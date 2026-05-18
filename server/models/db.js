@@ -20,12 +20,12 @@ async function initDB() {
         bonus REAL DEFAULT 1.0,
         currentSeat INTEGER DEFAULT NULL,
         seatCooldown INTEGER DEFAULT 0,
-        "totalIdleTime" INTEGER DEFAULT 0,
-        "totalMoneyEarned" INTEGER DEFAULT 0,
-        "totalGachaCount" INTEGER DEFAULT 0,
-        "ssrCount" INTEGER DEFAULT 0,
-        "srCount" INTEGER DEFAULT 0,
-        "rCount" INTEGER DEFAULT 0,
+        "totalidletime" INTEGER DEFAULT 0,
+        "totalmoneyearned" INTEGER DEFAULT 0,
+        "totalgachacount" INTEGER DEFAULT 0,
+        "ssrcount" INTEGER DEFAULT 0,
+        "srcount" INTEGER DEFAULT 0,
+        "rcount" INTEGER DEFAULT 0,
         lastSave INTEGER DEFAULT EXTRACT(EPOCH FROM NOW())::INTEGER,
         createdAt INTEGER DEFAULT EXTRACT(EPOCH FROM NOW())::INTEGER
       )

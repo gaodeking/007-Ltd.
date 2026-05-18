@@ -114,7 +114,7 @@ router.post('/leave', async (req, res) => {
   try {
     const { playerId, force } = req.body;
 
-    const player = await db.get('SELECT "id", "name", "money", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalIdleTime", "totalMoneyEarned", "totalGachaCount", "lastSave", "createdAt", "activityStatus" FROM players WHERE id = $1', [playerId]);
+    const player = await db.get('SELECT "id", "name", "money", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalidletime", "totalmoneyearned", "totalgachacount", "lastSave", "createdAt", "activityStatus" FROM players WHERE id = $1', [playerId]);
     if (!player) return res.status(404).json({ error: 'Player not found' });
 
     if (!player.currentSeat) {

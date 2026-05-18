@@ -57,9 +57,9 @@ function App() {
           bonus: playerData.bonus || 1.0,
           currentSeat: playerData.currentSeat || null,
           seatCooldown: playerData.seatCooldown || 0,
-          totalIdleTime: playerData.totalIdleTime || 0,
-          totalMoneyEarned: playerData.totalMoneyEarned || 0,
-          totalGachaCount: playerData.totalGachaCount || 0,
+          totalidletime: playerData.totalidletime || playerData.totalIdleTime || 0,
+          totalmoneyearned: playerData.totalmoneyearned || playerData.totalMoneyEarned || 0,
+          totalgachacount: playerData.totalgachacount || playerData.totalGachaCount || 0,
           lastSave: playerData.lastSave || Math.floor(Date.now() / 1000),
           activityStatus: playerData.activityStatus || null,
         });
