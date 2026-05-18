@@ -81,6 +81,10 @@ router.post('/pull', async (req, res) => {
     );
     const player = playerRes.rows[0];
 
+    // Debug logging for field casing issue
+    console.log('[GACHA DEBUG] Player object keys:', Object.keys(player));
+    console.log('[GACHA DEBUG] player.totalgachacount:', player.totalgachacount);
+
     if (!player) {
       await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Player not found' });
@@ -172,6 +176,9 @@ router.post('/pull', async (req, res) => {
     const newRCount = (player.rcount || 0) + rarityCounts.r;
     const newTotalGachaCount = (player.totalgachacount || 0) + results.length;
     const newMoney = player.money - cost;
+
+    // Debug logging for count calculation
+    console.log('[GACHA DEBUG] Calculated newTotalGachaCount:', newTotalGachaCount, '(old:', player.totalgachacount, '+ results:', results.length, ')');
 
     await client.query(
       'UPDATE players SET "money" = $1, "totalgachacount" = $2, "ssrcount" = $3, "srcount" = $4, "rcount" = $5 WHERE id = $6',
