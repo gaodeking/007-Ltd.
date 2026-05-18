@@ -58,7 +58,7 @@ router.post('/claim', async (req, res) => {
     const task = await db.get('SELECT "id", "date", "description", "target", "reward", "type" FROM daily_tasks WHERE "id" = $1', [taskId]);
     if (!task) return res.status(404).json({ error: 'Task not found' });
 
-    const playerTask = await db.get('SELECT * FROM player_tasks WHERE playerId = $1 AND taskId = $2',
+    const playerTask = await db.get('SELECT * FROM player_tasks WHERE "playerId" = $1 AND "taskId" = $2',
       [playerId, taskId]);
 
     if (!playerTask || playerTask.progress < task.target) {
