@@ -76,7 +76,7 @@ router.post('/pull', async (req, res) => {
 
     // Lock player row to prevent race conditions
     const playerRes = await client.query(
-      'SELECT *, "totalgachacount" FROM players WHERE id = $1 FOR UPDATE', 
+      'SELECT id, money, "totalgachacount", "ssrcount", "srcount", "rcount" FROM players WHERE id = $1 FOR UPDATE', 
       [playerId]
     );
     const player = playerRes.rows[0];
