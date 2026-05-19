@@ -7,6 +7,10 @@ const HEAVY_ACTIVITY_NAMES = {
   arcade: '金蝶游乐场',
 };
 
+// VIP Seat Configuration
+const VIP_SEAT_ID = 1;
+const VIP_PLAYER_NAMES = ['正版TZHZ'];
+
 function IdleHall({ playerId, player, seats, setSeats, setPlayer, playerRef, activityStatus, setActivityStatus, activityStatusRef, enterActivity, leaveActivity }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -70,6 +74,12 @@ function IdleHall({ playerId, player, seats, setSeats, setPlayer, playerRef, act
   };
 
   const getSeatEmoji = (seat, status) => {
+    const isVipSeat = seat.seatId === VIP_SEAT_ID;
+    const isVipPlayer = VIP_PLAYER_NAMES.includes(player.name);
+
+    if (isVipSeat && !isVipPlayer && status === 'empty') {
+      return '🔒';
+    }
     if (status === 'empty') return '🛏️';
     if (status === 'offline') return seat.playerAvatar || '🧙‍♂️';
     if (seat.playerId === playerId) return player.avatar || '🧙‍♂️';
@@ -77,6 +87,9 @@ function IdleHall({ playerId, player, seats, setSeats, setPlayer, playerRef, act
   };
 
   const getSeatName = (seat, status) => {
+    const isVipSeat = seat.seatId === VIP_SEAT_ID;
+    if (isVipSeat) return 'BOSS座';
+    
     if (status === 'empty') return '空置工位';
     if (status === 'offline') return (seat.playerName || '冒险者').substring(0, 6);
     if (seat.playerId === playerId) return player.name?.substring(0, 6) || '我';
@@ -84,6 +97,25 @@ function IdleHall({ playerId, player, seats, setSeats, setPlayer, playerRef, act
   };
 
   const getSeatClass = (seat, status) => {
+    const isVipSeat = seat.seatId === VIP_SEAT_ID;
+    const isVipPlayer = VIP_PLAYER_NAMES.includes(player.name);
+
+    // VIP Seat Logic
+    if (isVipSeat) {
+      if (!isVipPlayer) {
+        // Non-VIP player view: Locked
+        return 'ring-2 ring-[#d4c8c8] bg-[#f5f0f0] cursor-not-allowed grayscale opacity-60';
+      }
+      // VIP player view
+      if (status === 'online' || status === 'slacking') {
+         return seat.playerId === playerId 
+          ? 'ring-2 ring-[#f59e0b] bg-[#fffbeb] shadow-[0_0_10px_rgba(245,158,11,0.3)]' 
+          : 'ring-2 ring-[#f59e0b] bg-[#fffbeb] cursor-not-allowed';
+      }
+      return 'ring-2 ring-[#f59e0b] bg-[#fffbeb] hover:bg-[#fef3c7] cursor-pointer shadow-sm';
+    }
+
+    // Normal Seat Logic
     switch (status) {
       case 'online':
         return seat.playerId === playerId 
@@ -101,6 +133,16 @@ function IdleHall({ playerId, player, seats, setSeats, setPlayer, playerRef, act
   };
 
   const getSeatTooltip = (seat, status) => {
+    const isVipSeat = seat.seatId === VIP_SEAT_ID;
+    const isVipPlayer = VIP_PLAYER_NAMES.includes(player.name);
+
+    if (isVipSeat && !isVipPlayer) {
+      return 'BOSS专属座位 (无权入座)';
+    }
+    if (isVipSeat) {
+      return 'BOSS专属座位';
+    }
+
     switch (status) {
       case 'online':
         return `${seat.playerName || '冒险者'} - 在岗`;

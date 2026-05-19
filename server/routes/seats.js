@@ -7,6 +7,10 @@ const FIRST_SIT_COOLDOWN = 2;
 const CHANGE_SEAT_COOLDOWN = 2;
 const LEAVE_SEAT_COOLDOWN = 2;
 
+// VIP Seat Configuration
+const VIP_SEAT_ID = 1;
+const VIP_PLAYER_NAMES = ['正版TZHZ'];
+
 router.get('/', async (req, res) => {
   try {
     const seats = await db.all(`
@@ -69,6 +73,12 @@ router.post('/:seatId/sit', async (req, res) => {
     if (seat.playerId) {
       await client.query('ROLLBACK');
       return res.status(400).json({ error: '该座位已被占用' });
+    }
+
+    // VIP Seat Permission Check
+    if (seatId === VIP_SEAT_ID && !VIP_PLAYER_NAMES.includes(player.name)) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({ error: '这是BOSS专属座位，您无权入座' });
     }
 
     // Atomic operations: Release old seat + Set new seat + Update player
