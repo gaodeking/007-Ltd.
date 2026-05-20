@@ -25,6 +25,7 @@ async function start() {
   const broadcastRoutes = require('./routes/broadcast');
   const activityRoutes = require('./routes/activity');
   const scratchRoutes = require('./routes/scratch');
+  const stockRoutes = require('./routes/stocks');
 
   app.use('/api/player', playerRoutes);
   app.use('/api/seats', seatRoutes);
@@ -36,6 +37,7 @@ async function start() {
   app.use('/api/broadcast', broadcastRoutes);
   app.use('/api/activity', activityRoutes);
   app.use('/api/scratch', scratchRoutes);
+  app.use('/api/stocks', stockRoutes);
 
   // Health check
   app.get('/api/health', (req, res) => {

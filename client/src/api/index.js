@@ -72,4 +72,10 @@ export const scratchApi = {
   getCurrent: () => api.get('/scratch/current'),
 };
 
+export const stockApi = {
+  getStocks: () => api.get('/stocks'),
+  buy: (stockId, quantity) => api.post('/stocks/buy', { stockId, quantity }),
+  sell: (stockId, quantity) => api.post('/stocks/sell', { stockId, quantity }),
+};
+
 export default api;

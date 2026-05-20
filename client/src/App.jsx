@@ -333,22 +333,28 @@ function App() {
             />
             
             {/* 右侧栏容器 */}
-            <div className="row-span-2 flex flex-col gap-4">
-              <PlayerInfoCard 
-                player={player} 
-                earnings={earnings} 
-                earnTrigger={earnTrigger}
-                onOpenProfile={() => setShowProfile(true)}
-                playerId={playerId}
-              />
-              <AnnouncementPanel playerId={playerId} />
-              <ArcadePanel 
-                playerId={playerId}
-                player={player}
-                setPlayer={setPlayer}
-                enterActivity={enterActivity}
-                leaveActivity={leaveActivity}
-              />
+            <div className="row-span-2 flex flex-col gap-4 h-full">
+              <div className="flex-[2] min-h-0">
+                <PlayerInfoCard 
+                  player={player} 
+                  earnings={earnings} 
+                  earnTrigger={earnTrigger}
+                  onOpenProfile={() => setShowProfile(true)}
+                  playerId={playerId}
+                />
+              </div>
+              <div className="flex-[4] min-h-0 overflow-hidden">
+                <AnnouncementPanel playerId={playerId} />
+              </div>
+              <div className="flex-[4] min-h-0 overflow-hidden">
+                <ArcadePanel 
+                  playerId={playerId}
+                  player={player}
+                  setPlayer={setPlayer}
+                  enterActivity={enterActivity}
+                  leaveActivity={leaveActivity}
+                />
+              </div>
             </div>
             
             {/* 中间栏底部 - 光之冒险 */}
