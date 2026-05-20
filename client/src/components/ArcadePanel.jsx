@@ -43,8 +43,8 @@ function ArcadePanel({ playerId, player, setPlayer, enterActivity, leaveActivity
           onClick={handleOpenScratch}
           className="flex flex-col items-center justify-center p-4 bg-[#f5f0f0] hover:bg-[#e5e0e0] border border-[#d4c8c8] rounded-lg transition-colors text-[#4a3a3a]"
         >
-          <span className="text-3xl mb-2"></span>
-          <span className="font-semibold text-sm">命运九宫格</span>
+          <span className="text-3xl mb-2">🎫</span>
+          <span className="font-semibold text-sm">仙人彩</span>
         </button>
 
         {/* Stock Market Button */}
