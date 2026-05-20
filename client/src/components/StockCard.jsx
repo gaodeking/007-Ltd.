@@ -9,6 +9,13 @@ function StockCard({ stock, holding, onBuy, onSell }) {
   const colorClass = isUp ? 'text-red-500' : 'text-green-500';
   const arrow = isUp ? '▲' : '▼';
   
+  // Calculate Profit/Loss
+  const holdingValue = holding.quantity * stock.current_price;
+  const costValue = holding.quantity * holding.avg_cost;
+  const profit = holdingValue - costValue;
+  const profitPercent = holding.avg_cost > 0 ? (profit / costValue) * 100 : 0;
+  const isProfit = profit >= 0;
+
   // Prepare chart data
   const chartData = stock.history.map(h => ({
     time: new Date(h.timestamp * 1000).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
@@ -89,10 +96,18 @@ function StockCard({ stock, holding, onBuy, onSell }) {
           <span className="font-medium text-[#4a3a3a]">{holding.quantity} 股</span>
         </div>
         {holding.quantity > 0 && (
-          <div className="flex justify-between">
-            <span>成本:</span>
-            <span>{holding.avg_cost}</span>
-          </div>
+          <>
+            <div className="flex justify-between">
+              <span>成本:</span>
+              <span>{holding.avg_cost}</span>
+            </div>
+            <div className="flex justify-between font-medium">
+              <span>盈亏:</span>
+              <span className={isProfit ? 'text-red-500' : 'text-green-500'}>
+                {isProfit ? '+' : ''}{profit.toLocaleString()} ({isProfit ? '+' : ''}{profitPercent.toFixed(1)}%)
+              </span>
+            </div>
+          </>
         )}
         {stock.is_circuit_breaker && (
           <div className="text-red-500 font-bold text-center mt-1">⚠️ 熔断中，暂停买入</div>
