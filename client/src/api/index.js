@@ -74,8 +74,8 @@ export const scratchApi = {
 
 export const stockApi = {
   getStocks: () => api.get('/stocks'),
-  buy: (stockId, quantity) => api.post('/stocks/buy', { stockId, quantity }),
-  sell: (stockId, quantity) => api.post('/stocks/sell', { stockId, quantity }),
+  buy: (playerId, stockId, quantity) => api.post('/stocks/buy', { playerId, stockId, quantity }),
+  sell: (playerId, stockId, quantity) => api.post('/stocks/sell', { playerId, stockId, quantity }),
 };
 
 export default api;

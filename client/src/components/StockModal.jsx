@@ -36,7 +36,7 @@ function StockModal({ playerId, player, setPlayer, onClose }) {
 
   const handleBuy = async (stockId, quantity) => {
     try {
-      await stockApi.buy(stockId, quantity);
+      await stockApi.buy(playerId, stockId, quantity);
       // Refresh data after buy
       await fetchData();
       // Update local player money (approximate, will sync on auto-save)
@@ -54,7 +54,7 @@ function StockModal({ playerId, player, setPlayer, onClose }) {
 
   const handleSell = async (stockId, quantity) => {
     try {
-      const res = await stockApi.sell(stockId, quantity);
+      const res = await stockApi.sell(playerId, stockId, quantity);
       // Refresh data after sell
       await fetchData();
       // Update local player money
