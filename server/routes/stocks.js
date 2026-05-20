@@ -1,12 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../models/db');
+const stockNews = require('../config/stock_news.json');
 
 // Circuit Breaker Thresholds
 const CIRCUIT_BREAKER_TRIGGER_RATIO = 0.75; // Trigger when price < 75% of center
 const CIRCUIT_BREAKER_RELEASE_RATIO = 0.70; // Release when price > 70% of center
 const PRICE_FLOOR_RATIO = 0.20; // Hard floor at 20% of center
 const PROFIT_TAX_RATE = 0.02; // 2% tax on profit
+const NEWS_THRESHOLD = 0.15; // 15% change triggers news
+const NEWS_COOLDOWN = 180; // 3 minutes cooldown
 
 // Lazy Price Update Function
 async function updateStockPrice(client, stock) {
@@ -49,6 +52,23 @@ async function updateStockPrice(client, stock) {
   // Hard Floor
   const floorPrice = Math.floor(centerPrice * PRICE_FLOOR_RATIO);
   newPrice = Math.max(floorPrice, newPrice);
+
+  // Check for News Trigger
+  const changePercent = Math.abs((newPrice - currentPrice) / currentPrice);
+  if (changePercent >= NEWS_THRESHOLD) {
+    const lastNewsTime = stock.last_news_at ? new Date(stock.last_news_at).getTime() / 1000 : 0;
+    if (now - lastNewsTime > NEWS_COOLDOWN) {
+      const direction = newPrice > currentPrice ? 'up' : 'down';
+      const newsTemplate = stockNews[stock.id]?.[direction];
+      if (newsTemplate) {
+        await client.query(
+          'INSERT INTO broadcast_messages (content, rarity) VALUES ($1, $2)',
+          [`📈 股市快讯：${newsTemplate}`, 'n']
+        );
+        await client.query('UPDATE stocks SET last_news_at = NOW() WHERE id = $1', [stock.id]);
+      }
+    }
+  }
 
   // Update Database
   await client.query(
