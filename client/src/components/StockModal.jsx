@@ -22,7 +22,8 @@ function StockModal({ playerId, player, setPlayer, onClose }) {
       setLoading(false);
     } catch (err) {
       console.error('Failed to load stocks:', err);
-      setError('加载失败');
+      setError('加载失败: ' + (err.response?.data?.error || err.message));
+      setLoading(false);
     }
   };
 
