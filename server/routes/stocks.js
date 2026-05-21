@@ -193,12 +193,7 @@ router.post('/buy', async (req, res) => {
     // Update player money
     await client.query('UPDATE players SET money = money - $1 WHERE id = $2', [cost, playerId]);
     
-    // Update or insert holding
-    const existingRes = await client.query(
-      'SELECT quantity, avg_cost FROM player_stocks WHERE playerId = $1 AND stock_id = $2',
-      [playerId, stockId]
-    );
-    
+    // Update or insert holding (reuse existingRes from position limit check)
     if (existingRes.rows.length > 0) {
       const existing = existingRes.rows[0];
       const totalCost = (existing.avg_cost * existing.quantity) + cost;
