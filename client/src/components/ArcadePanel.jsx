@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import api from '../api';
 import ScratchModal from './ScratchModal';
 import StockModal from './StockModal';
@@ -10,14 +10,18 @@ function ArcadePanel({ playerId, player, setPlayer, enterActivity, leaveActivity
   const [showEntryModal, setShowEntryModal] = useState(false);
   const [holdings, setHoldings] = useState([]);
 
-  // Fetch holdings to check for entry bypass
-  useEffect(() => {
+  // Fetch holdings when entry modal opens to ensure fresh data
+  const handleOpenStockClick = async () => {
+    setShowEntryModal(true);
     if (playerId) {
-      api.get('/stocks', { headers: { 'X-Player-Id': playerId } })
-        .then(res => setHoldings(res.data.holdings || []))
-        .catch(() => setHoldings([]));
+      try {
+        const res = await api.get('/stocks', { headers: { 'X-Player-Id': playerId } });
+        setHoldings(res.data.holdings || []);
+      } catch {
+        setHoldings([]);
+      }
     }
-  }, [playerId]);
+  };
 
   const handleOpenScratch = async () => {
     await enterActivity('arcade');

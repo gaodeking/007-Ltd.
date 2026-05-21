@@ -8,7 +8,6 @@ const CIRCUIT_BREAKER_TRIGGER_RATIO = 0.75; // Trigger when price < 75% of cente
 const CIRCUIT_BREAKER_RELEASE_RATIO = 0.70; // Release when price > 70% of center
 const PRICE_FLOOR_RATIO = 0.20; // Hard floor at 20% of center
 const PRICE_CEILING_RATIO = 2.0; // Hard ceiling at 200% of center
-const PROFIT_TAX_RATE = 0.02; // 2% tax on profit
 const NEWS_THRESHOLD = 0.15; // 15% change triggers news
 const NEWS_COOLDOWN = 180; // 3 minutes cooldown
 const MAX_HOLDING_PER_STOCK = 500; // Max 500 shares per stock per player
@@ -259,7 +258,7 @@ router.post('/sell', async (req, res) => {
     let taxRate = 0.02;
     if (profit > 100000) {
       taxRate = 0.10;
-    } else if (profit > 10000) {
+    } else if (profit >= 10000) {
       taxRate = 0.05;
     }
     const tax = profit > 0 ? Math.floor(profit * taxRate) : 0;
