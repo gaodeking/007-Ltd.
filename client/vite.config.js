@@ -13,8 +13,12 @@ export default defineConfig({
           version: Date.now().toString(),
           timestamp: new Date().toISOString()
         };
+        const distPath = path.resolve(__dirname, 'dist');
+        if (!fs.existsSync(distPath)) {
+          fs.mkdirSync(distPath, { recursive: true });
+        }
         fs.writeFileSync(
-          path.resolve(__dirname, 'dist/version.json'),
+          path.join(distPath, 'version.json'),
           JSON.stringify(version)
         );
       }
