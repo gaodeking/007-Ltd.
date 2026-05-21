@@ -7,9 +7,11 @@ const stockNews = require('../config/stock_news.json');
 const CIRCUIT_BREAKER_TRIGGER_RATIO = 0.75; // Trigger when price < 75% of center
 const CIRCUIT_BREAKER_RELEASE_RATIO = 0.70; // Release when price > 70% of center
 const PRICE_FLOOR_RATIO = 0.20; // Hard floor at 20% of center
+const PRICE_CEILING_RATIO = 2.0; // Hard ceiling at 200% of center
 const PROFIT_TAX_RATE = 0.02; // 2% tax on profit
 const NEWS_THRESHOLD = 0.15; // 15% change triggers news
 const NEWS_COOLDOWN = 180; // 3 minutes cooldown
+const MAX_HOLDING_PER_STOCK = 500; // Max 500 shares per stock per player
 
 // Lazy Price Update Function
 async function updateStockPrice(client, stock) {
@@ -34,7 +36,10 @@ async function updateStockPrice(client, stock) {
   const u1 = Math.random();
   const u2 = Math.random();
   const z = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
-  const noise = z * volatility * currentPrice;
+  
+  // Asymmetric Volatility: Upside halved, Downside doubled
+  const effectiveVol = z > 0 ? volatility * 0.5 : volatility * 2.0;
+  const noise = z * effectiveVol * currentPrice;
 
   // Circuit Breaker Logic
   if (!isCircuitBreaker && currentPrice < centerPrice * CIRCUIT_BREAKER_TRIGGER_RATIO) {
@@ -52,6 +57,10 @@ async function updateStockPrice(client, stock) {
   // Hard Floor
   const floorPrice = Math.floor(centerPrice * PRICE_FLOOR_RATIO);
   newPrice = Math.max(floorPrice, newPrice);
+  
+  // Price Ceiling (2x Center Price)
+  const ceilingPrice = Math.floor(centerPrice * PRICE_CEILING_RATIO);
+  newPrice = Math.min(ceilingPrice, newPrice);
 
   // Check for News Trigger
   const changePercent = Math.abs((newPrice - currentPrice) / currentPrice);
@@ -159,6 +168,23 @@ router.post('/buy', async (req, res) => {
       return res.status(400).json({ error: '熔断中，暂停买入' });
     }
     
+    // Price Ceiling Check: Prevent buying at absolute peak
+    if (stock.current_price >= Math.floor(stock.center_price * PRICE_CEILING_RATIO)) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: '股价已触顶，请稍后买入' });
+    }
+    
+    // Position Limit Check: Max 500 shares per stock
+    const existingRes = await client.query(
+      'SELECT quantity FROM player_stocks WHERE playerId = $1 AND stock_id = $2',
+      [playerId, stockId]
+    );
+    const currentQty = existingRes.rows[0]?.quantity || 0;
+    if (currentQty + quantity > MAX_HOLDING_PER_STOCK) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: `单只股票持仓上限 ${MAX_HOLDING_PER_STOCK} 股` });
+    }
+    
     const cost = stock.current_price * quantity;
     if (player.money < cost) {
       await client.query('ROLLBACK');
@@ -229,8 +255,14 @@ router.post('/sell', async (req, res) => {
     const costBasis = holding.avg_cost * quantity;
     const profit = sellValue - costBasis;
     
-    // Calculate tax (only on profit)
-    const tax = profit > 0 ? Math.floor(profit * PROFIT_TAX_RATE) : 0;
+    // Tiered Profit Tax: 2% (<10k), 5% (10k-100k), 10% (>100k)
+    let taxRate = 0.02;
+    if (profit > 100000) {
+      taxRate = 0.10;
+    } else if (profit > 10000) {
+      taxRate = 0.05;
+    }
+    const tax = profit > 0 ? Math.floor(profit * taxRate) : 0;
     const netProceeds = sellValue - tax;
     
     // Update player money

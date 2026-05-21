@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import api from '../api';
 import ScratchModal from './ScratchModal';
 import StockModal from './StockModal';
 import StockEntryModal from './StockEntryModal';
@@ -7,6 +8,16 @@ function ArcadePanel({ playerId, player, setPlayer, enterActivity, leaveActivity
   const [showScratch, setShowScratch] = useState(false);
   const [showStock, setShowStock] = useState(false);
   const [showEntryModal, setShowEntryModal] = useState(false);
+  const [holdings, setHoldings] = useState([]);
+
+  // Fetch holdings to check for entry bypass
+  useEffect(() => {
+    if (playerId) {
+      api.get('/stocks', { headers: { 'X-Player-Id': playerId } })
+        .then(res => setHoldings(res.data.holdings || []))
+        .catch(() => setHoldings([]));
+    }
+  }, [playerId]);
 
   const handleOpenScratch = async () => {
     await enterActivity('arcade');
@@ -78,6 +89,7 @@ function ArcadePanel({ playerId, player, setPlayer, enterActivity, leaveActivity
       {showEntryModal && (
         <StockEntryModal
           player={player}
+          holdings={holdings}
           onEnter={handleConfirmEnterStock}
           onClose={() => setShowEntryModal(false)}
         />

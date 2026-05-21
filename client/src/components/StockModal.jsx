@@ -62,6 +62,9 @@ function StockModal({ playerId, player, setPlayer, onClose }) {
         ...prev,
         money: prev.money + res.data.netProceeds
       }));
+      if (res.data.tax > 0) {
+        alert(`交易成功！已扣除盈利税费 ${res.data.tax.toLocaleString()} 金币`);
+      }
     } catch (err) {
       alert(err.response?.data?.error || '卖出失败');
     }
@@ -87,6 +90,9 @@ function StockModal({ playerId, player, setPlayer, onClose }) {
             <span className="ml-2 font-bold text-[#4a3a3a]">
               {stocks.reduce((sum, s) => sum + ((holdings[s.id]?.quantity || 0) * s.current_price), 0).toLocaleString()}
             </span>
+          </div>
+          <div className="text-xs text-[#9ca3af]">
+            税费: 2% (&lt;1万) / 5% (1-10万) / 10% (&gt;10万) | 限仓 500 股
           </div>
         </div>
 

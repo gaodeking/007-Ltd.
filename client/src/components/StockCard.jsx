@@ -16,6 +16,11 @@ function StockCard({ stock, holding, onBuy, onSell }) {
   const profitPercent = holding.avg_cost > 0 ? (profit / costValue) * 100 : 0;
   const isProfit = profit >= 0;
 
+  // Position Limit Check
+  const MAX_HOLDING = 500;
+  const remainingCapacity = MAX_HOLDING - holding.quantity;
+  const isAtCeiling = stock.current_price >= Math.floor(stock.center_price * 2.0);
+
   // Prepare chart data
   const chartData = stock.history.map(h => ({
     time: new Date(h.timestamp * 1000).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
@@ -28,6 +33,14 @@ function StockCard({ stock, holding, onBuy, onSell }) {
   const handleBuyClick = () => {
     const qty = parseInt(quantity);
     if (qty > 0) {
+      if (qty > remainingCapacity) {
+        alert(`单只股票持仓上限 ${MAX_HOLDING} 股，还可买入 ${remainingCapacity} 股`);
+        return;
+      }
+      if (isAtCeiling) {
+        alert('股价已触顶，请等待回落后再买入');
+        return;
+      }
       onBuy(stock.id, qty);
       setQuantity('');
     }
@@ -93,7 +106,7 @@ function StockCard({ stock, holding, onBuy, onSell }) {
       <div className="text-xs text-[#6b5b5b] mb-3 space-y-1">
         <div className="flex justify-between">
           <span>持有:</span>
-          <span className="font-medium text-[#4a3a3a]">{holding.quantity} 股</span>
+          <span className="font-medium text-[#4a3a3a]">{holding.quantity} / {MAX_HOLDING} 股</span>
         </div>
         {holding.quantity > 0 && (
           <>
@@ -111,6 +124,9 @@ function StockCard({ stock, holding, onBuy, onSell }) {
         )}
         {stock.is_circuit_breaker && (
           <div className="text-red-500 font-bold text-center mt-1">⚠️ 熔断中，暂停买入</div>
+        )}
+        {isAtCeiling && !stock.is_circuit_breaker && (
+          <div className="text-orange-500 font-bold text-center mt-1">🚫 股价触顶，暂停买入</div>
         )}
       </div>
 
@@ -135,7 +151,7 @@ function StockCard({ stock, holding, onBuy, onSell }) {
         <div className="flex gap-2">
           <button
             onClick={handleBuyClick}
-            disabled={stock.is_circuit_breaker || !quantity}
+            disabled={stock.is_circuit_breaker || isAtCeiling || !quantity}
             className="flex-1 py-2 bg-[#8fbc8f] hover:bg-[#7faa7f] disabled:opacity-50 disabled:cursor-not-allowed rounded text-white text-sm font-semibold"
           >
             买入
