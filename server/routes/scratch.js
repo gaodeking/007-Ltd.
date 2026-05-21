@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../models/db');
+const { getBeijingDate } = require('../utils/date');
 
 const SCRATCH_COST = 500;
 const PRIZES = {
@@ -153,7 +154,7 @@ router.post('/claim', async (req, res) => {
     );
     
     // Update daily task progress for scratch_count
-    const today = new Date().toISOString().split('T')[0];
+    const today = getBeijingDate();
     
     // 1. Try to update existing progress
     await client.query(`

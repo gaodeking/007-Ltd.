@@ -1,12 +1,38 @@
 ﻿const express = require('express');
 const router = express.Router();
 const db = require('../models/db');
+const { getBeijingDate, getBeijingMonth, getDaysInBeijingMonth } = require('../utils/date');
 
 // --- Daily Tasks ---
 
+// Ensure daily tasks exist for the given date
+async function ensureDailyTasks(date) {
+  const taskResult = await db.get('SELECT COUNT(*) as count FROM daily_tasks WHERE "date" = $1', [date]);
+  const taskCount = parseInt(taskResult?.count || 0);
+
+  if (taskCount === 0) {
+    const tasks = [
+      [date, '连续挂机1小时', 3600, '{"money": 200}', 'idle_time'],
+      [date, '抽奖3次', 3, '{"money": 100}', 'gacha_count'],
+      [date, '累计获得1000金币', 1000, '{"money": 200}', 'money_earned'],
+      [date, '更换床位1次', 1, '{"money": 100}', 'seat_change'],
+      [date, '刮仙人彩1次', 1, '{"money": 150}', 'scratch_count'],
+    ];
+    for (const task of tasks) {
+      await db.run(
+        'INSERT INTO daily_tasks ("date", "description", "target", "reward", "type") VALUES ($1, $2, $3, $4, $5)',
+        task
+      );
+    }
+  }
+}
+
 router.get('/:playerId', async (req, res) => {
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getBeijingDate();
+
+    // Ensure daily tasks exist for today
+    await ensureDailyTasks(today);
 
     const tasks = await db.all(`
       SELECT dt."id", dt."date", dt."description", dt."target", dt."reward", dt."type", COALESCE(pt."progress", 0) as "progress", COALESCE(pt."claimed", 0) as "claimed"
@@ -24,7 +50,7 @@ router.get('/:playerId', async (req, res) => {
 router.post('/progress', async (req, res) => {
   try {
     const { playerId, type, value } = req.body;
-    const today = new Date().toISOString().split('T')[0];
+    const today = getBeijingDate();
 
     const tasks = await db.all('SELECT "id", "date", "description", "target", "reward", "type" FROM daily_tasks WHERE "date" = $1 AND "type" = $2', [today, type]);
 
@@ -93,9 +119,10 @@ router.post('/clock-in', async (req, res) => {
     await client.query('BEGIN');
 
     const now = new Date();
-    const todayStr = now.toISOString().split('T')[0];
-    const monthStr = now.toISOString().slice(0, 7); // YYYY-MM
-    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const beijingTime = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+    const todayStr = beijingTime.toISOString().split('T')[0];
+    const monthStr = beijingTime.toISOString().slice(0, 7);
+    const daysInMonth = new Date(beijingTime.getUTCFullYear(), beijingTime.getUTCMonth() + 1, 0).getDate();
 
     const record = await client.query(
       'SELECT * FROM player_clock_ins WHERE "playerId" = $1 AND "month" = $2',
@@ -140,9 +167,10 @@ router.post('/clock-in', async (req, res) => {
 router.get('/clock-in/:playerId', async (req, res) => {
   try {
     const now = new Date();
-    const monthStr = now.toISOString().slice(0, 7);
-    const todayStr = now.toISOString().split('T')[0];
-    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const beijingTime = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+    const monthStr = beijingTime.toISOString().slice(0, 7);
+    const todayStr = beijingTime.toISOString().split('T')[0];
+    const daysInMonth = new Date(beijingTime.getUTCFullYear(), beijingTime.getUTCMonth() + 1, 0).getDate();
 
     const record = await db.get(
       'SELECT "count", "last_clock_in" FROM player_clock_ins WHERE "playerId" = $1 AND "month" = $2',
@@ -246,7 +274,7 @@ router.post('/achievements/claim/:playerId/:id', async (req, res) => {
 
 async function updateTaskProgress(playerId, type, value, client = null) {
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getBeijingDate();
     
     // Helper to run query with or without transaction client
     const runQuery = async (query, params) => {

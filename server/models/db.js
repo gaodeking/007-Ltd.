@@ -1,4 +1,5 @@
 ﻿const { Pool } = require('pg');
+const { getBeijingDate } = require('../utils/date');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -121,8 +122,8 @@ async function initDB() {
       }
     }
 
-    // Initialize daily tasks if empty for today
-    const today = new Date().toISOString().split('T')[0];
+    // Initialize daily tasks if empty for today (Beijing Time)
+    const today = getBeijingDate();
     const taskResult = await client.query('SELECT COUNT(*) as count FROM daily_tasks WHERE "date" = $1', [today]);
     const taskCount = parseInt(taskResult.rows[0].count);
 
@@ -132,6 +133,7 @@ async function initDB() {
         [today, '抽奖3次', 3, '{"money": 100}', 'gacha_count'],
         [today, '累计获得1000金币', 1000, '{"money": 200}', 'money_earned'],
         [today, '更换床位1次', 1, '{"money": 100}', 'seat_change'],
+        [today, '刮仙人彩1次', 1, '{"money": 150}', 'scratch_count'],
       ];
       for (const task of tasks) {
         await client.query(
