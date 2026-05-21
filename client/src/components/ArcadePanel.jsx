@@ -12,7 +12,6 @@ function ArcadePanel({ playerId, player, setPlayer, enterActivity, leaveActivity
 
   // Fetch holdings when entry modal opens to ensure fresh data
   const handleOpenStockClick = async () => {
-    setShowEntryModal(true);
     if (playerId) {
       try {
         const res = await api.get('/stocks', { headers: { 'X-Player-Id': playerId } });
@@ -21,6 +20,7 @@ function ArcadePanel({ playerId, player, setPlayer, enterActivity, leaveActivity
         setHoldings([]);
       }
     }
+    setShowEntryModal(true);
   };
 
   const handleOpenScratch = async () => {
@@ -31,10 +31,6 @@ function ArcadePanel({ playerId, player, setPlayer, enterActivity, leaveActivity
   const handleCloseScratch = async () => {
     setShowScratch(false);
     await leaveActivity();
-  };
-
-  const handleOpenStockClick = () => {
-    setShowEntryModal(true);
   };
 
   const handleConfirmEnterStock = async () => {
