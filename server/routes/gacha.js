@@ -200,8 +200,8 @@ router.post('/pull', async (req, res) => {
     // Record gacha logs
     for (const result of results) {
       await client.query(
-        'INSERT INTO gacha_log ("playerId", "itemId", "rarity") VALUES ($1, $2, $3)',
-        [playerId, result.item.id, result.item.rarity]
+        'INSERT INTO gacha_log ("playerId", "player_name", "itemId", "rarity") VALUES ($1, $2, $3, $4)',
+        [playerId, player.name || '无名冒险者', result.item.id, result.item.rarity]
       );
     }
     

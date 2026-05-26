@@ -79,6 +79,7 @@ async function initDB() {
       CREATE TABLE IF NOT EXISTS gacha_log (
         "id" SERIAL PRIMARY KEY,
         "playerId" TEXT,
+        "player_name" TEXT DEFAULT '无名冒险者',
         "itemId" TEXT,
         "rarity" TEXT,
         "timestamp" INTEGER DEFAULT EXTRACT(EPOCH FROM NOW())::INTEGER
