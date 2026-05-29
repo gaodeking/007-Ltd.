@@ -1,11 +1,5 @@
 {
-  "dev": {
-    "url": "env(DATABASE_URL)"
-  },
-  "test": {
-    "url": "env(DATABASE_URL)"
-  },
-  "prod": {
+  "production": {
     "url": "env(DATABASE_URL)"
   }
 }
