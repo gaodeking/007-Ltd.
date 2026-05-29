@@ -1,0 +1,11 @@
+{
+  "dev": {
+    "url": "env(DATABASE_URL)"
+  },
+  "test": {
+    "url": "env(DATABASE_URL)"
+  },
+  "prod": {
+    "url": "env(DATABASE_URL)"
+  }
+}

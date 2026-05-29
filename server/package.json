@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "migrate": "node-pg-migrate up",
+    "migrate": "node-pg-migrate up --migrations-dir ./migrations",
     "migrate:create": "node-pg-migrate create"
   },
   "dependencies": {
