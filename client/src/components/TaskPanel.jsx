@@ -61,6 +61,8 @@ function TaskPanel({ playerId, player, setPlayer, tasks, setTasks, onClose }) {
       // Update local player state to reflect gold gain immediately
       setPlayer(prev => ({ ...prev, money: prev.money + 50 }));
     } catch (err) {
+      const errorMsg = err.response?.data?.error || '打卡失败，请重试';
+      alert(errorMsg);
       console.error('Clock-in failed:', err);
     } finally {
       setClockingIn(false);

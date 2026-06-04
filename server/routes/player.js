@@ -133,10 +133,17 @@ router.post('/:id/save', async (req, res) => {
     const heartbeatThreshold = 60;
     const isOffline = !player.lastHeartbeat || (now - player.lastHeartbeat > heartbeatThreshold);
     
-    if (!isOffline && player.currentSeat && elapsed > 0) {
-      // 在线且有座位：正常计算收益
-      backendEarnings = Math.floor(elapsed * safeIdleRate * safeBonus);
-      effectiveElapsed = elapsed;
+    // 限制单次结算最大时长为 60 秒，防止离线时长被错误计入
+    const maxElapsedPerSave = 60;
+    const cappedElapsed = Math.min(elapsed, maxElapsedPerSave);
+    
+    let backendEarnings = 0;
+    let effectiveElapsed = 0;
+    
+    if (!isOffline && player.currentSeat && cappedElapsed > 0) {
+      // 在线且有座位：正常计算收益（使用 cappedElapsed）
+      backendEarnings = Math.floor(cappedElapsed * safeIdleRate * safeBonus);
+      effectiveElapsed = cappedElapsed;
     } else if (isOffline) {
       // 离线：无收益，不计入在线时长
       backendEarnings = 0;
@@ -194,50 +201,6 @@ router.post('/:id/save', async (req, res) => {
     res.json({ success: true, backendEarnings, money: finalMoney, totalmoneyearned: finalTotalMoneyEarned, totalidletime: finalTotalIdleTime, totalgachacount: Number(totalgachacount) || 0 });
   } catch (err) {
     console.error('Error in /save:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-router.get('/:id/offline-earnings', async (req, res) => {
-  try {
-    const player = await db.get('SELECT "id", "name", "avatar", "money", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalidletime", "totalmoneyearned", "totalgachacount", "lastSave", "createdAt" FROM players WHERE id = $1', [req.params.id]);
-    if (!player) return res.status(404).json({ error: 'Player not found' });
-
-    const now = Math.floor(Date.now() / 1000);
-    const offlineSeconds = now - player.lastSave;
-    const maxOfflineSeconds = 8 * 3600;
-    const effectiveSeconds = Math.min(offlineSeconds, maxOfflineSeconds);
-
-    const earnings = Math.floor(effectiveSeconds * player.idleRate * player.bonus);
-
-    res.json({
-      offlineSeconds: effectiveSeconds,
-      earnings,
-      canClaim: earnings > 0
-    });
-  } catch (err) {
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-router.post('/:id/claim-offline', async (req, res) => {
-  try {
-    const player = await db.get('SELECT "id", "name", "avatar", "money", "idleRate", "bonus", "currentSeat", "seatCooldown", "totalidletime", "totalmoneyearned", "totalgachacount", "lastSave", "createdAt" FROM players WHERE id = $1', [req.params.id]);
-    if (!player) return res.status(404).json({ error: 'Player not found' });
-
-    const now = Math.floor(Date.now() / 1000);
-    const offlineSeconds = now - player.lastSave;
-    const maxOfflineSeconds = 8 * 3600;
-    const effectiveSeconds = Math.min(offlineSeconds, maxOfflineSeconds);
-    const earnings = Math.floor(effectiveSeconds * player.idleRate * player.bonus);
-
-    if (earnings > 0) {
-      await db.run('UPDATE players SET "money" = "money" + $1, "totalmoneyearned" = "totalmoneyearned" + $1, "lastSave" = $2 WHERE id = $3',
-        [earnings, now, req.params.id]);
-    }
-
-    res.json({ earnings, newMoney: player.money + earnings });
-  } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
