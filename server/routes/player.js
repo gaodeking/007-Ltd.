@@ -137,9 +137,6 @@ router.post('/:id/save', async (req, res) => {
     const maxElapsedPerSave = 60;
     const cappedElapsed = Math.min(elapsed, maxElapsedPerSave);
     
-    let backendEarnings = 0;
-    let effectiveElapsed = 0;
-    
     if (!isOffline && player.currentSeat && cappedElapsed > 0) {
       // 在线且有座位：正常计算收益（使用 cappedElapsed）
       backendEarnings = Math.floor(cappedElapsed * safeIdleRate * safeBonus);
