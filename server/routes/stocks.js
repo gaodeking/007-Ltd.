@@ -146,7 +146,13 @@ router.get('/', async (req, res) => {
 router.post('/buy', async (req, res) => {
   const client = await db.pool.connect();
   try {
-    const { playerId, stockId, quantity } = req.body;
+    const { playerId, stockId } = req.body;
+    const quantity = parseInt(req.body.quantity);
+    
+    // Validate quantity
+    if (Number.isNaN(quantity) || quantity <= 0) {
+      return res.status(400).json({ error: '买入数量无效' });
+    }
     
     await client.query('BEGIN');
     
@@ -175,7 +181,7 @@ router.post('/buy', async (req, res) => {
     
     // Position Limit Check: Max 500 shares per stock
     const existingRes = await client.query(
-      'SELECT quantity FROM player_stocks WHERE playerId = $1 AND stock_id = $2',
+      'SELECT quantity, avg_cost FROM player_stocks WHERE playerId = $1 AND stock_id = $2',
       [playerId, stockId]
     );
     const currentQty = existingRes.rows[0]?.quantity || 0;
@@ -185,7 +191,10 @@ router.post('/buy', async (req, res) => {
     }
     
     const cost = stock.current_price * quantity;
-    if (player.money < cost) {
+    
+    // Validate player money
+    const playerMoney = Number(player.money) || 0;
+    if (playerMoney < cost) {
       await client.query('ROLLBACK');
       return res.status(400).json({ error: '金币不足' });
     }
@@ -196,9 +205,19 @@ router.post('/buy', async (req, res) => {
     // Update or insert holding (reuse existingRes from position limit check)
     if (existingRes.rows.length > 0) {
       const existing = existingRes.rows[0];
-      const totalCost = (existing.avg_cost * existing.quantity) + cost;
-      const newQuantity = existing.quantity + quantity;
+      // Defensive: ensure values are valid numbers
+      const safeAvgCost = Number(existing.avg_cost) || 0;
+      const safeQuantity = Number(existing.quantity) || 0;
+      
+      const totalCost = (safeAvgCost * safeQuantity) + cost;
+      const newQuantity = safeQuantity + quantity;
       const newAvgCost = Math.floor(totalCost / newQuantity);
+      
+      // Final check: ensure newAvgCost is not NaN
+      if (Number.isNaN(newAvgCost)) {
+        await client.query('ROLLBACK');
+        return res.status(500).json({ error: '计算错误，请稍后重试' });
+      }
       
       await client.query(
         'UPDATE player_stocks SET quantity = $1, avg_cost = $2 WHERE playerId = $3 AND stock_id = $4',
@@ -226,7 +245,13 @@ router.post('/buy', async (req, res) => {
 router.post('/sell', async (req, res) => {
   const client = await db.pool.connect();
   try {
-    const { playerId, stockId, quantity } = req.body;
+    const { playerId, stockId } = req.body;
+    const quantity = parseInt(req.body.quantity);
+    
+    // Validate quantity
+    if (Number.isNaN(quantity) || quantity <= 0) {
+      return res.status(400).json({ error: '卖出数量无效' });
+    }
     
     await client.query('BEGIN');
     
@@ -242,11 +267,15 @@ router.post('/sell', async (req, res) => {
     }
     
     const holding = holdingRes.rows[0];
+    // Defensive: ensure values are valid numbers
+    const safeAvgCost = Number(holding.avg_cost) || 0;
+    const safeQuantity = Number(holding.quantity) || 0;
+    
     const stockRes = await client.query('SELECT current_price FROM stocks WHERE id = $1', [stockId]);
     const stock = stockRes.rows[0];
     
     const sellValue = stock.current_price * quantity;
-    const costBasis = holding.avg_cost * quantity;
+    const costBasis = safeAvgCost * quantity;
     const profit = sellValue - costBasis;
     
     // Tiered Profit Tax: 2% (<10k), 5% (10k-100k), 10% (>100k)
@@ -263,7 +292,7 @@ router.post('/sell', async (req, res) => {
     await client.query('UPDATE players SET money = money + $1 WHERE id = $2', [netProceeds, playerId]);
     
     // Update holding
-    const newQuantity = holding.quantity - quantity;
+    const newQuantity = safeQuantity - quantity;
     if (newQuantity === 0) {
       await client.query('DELETE FROM player_stocks WHERE playerId = $1 AND stock_id = $2', [playerId, stockId]);
     } else {
